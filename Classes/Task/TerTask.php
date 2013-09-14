@@ -37,6 +37,7 @@ class TerTask {
 		$this->updateExtensionsCache();
 		$extensions = $this->getUpdatedExtensionVersions(time() - 86400 * 14);
 
+		echo ' [INFO] ' . count($extensions) . ' updated extensions' . "\n";
 		foreach ($extensions as $extensionKey => $versions) {
 			foreach ($versions as $version) {
 				$this->enqueueForRendering($extensionKey, $version);
@@ -51,11 +52,11 @@ class TerTask {
 		}
 		$extensionDirectory = $workingDirectory . $extensionKey . '/' . $version;
 		if (!is_dir($extensionDirectory)) {
-			echo '[INFO] Fetching extension "' . $extensionKey . '" v.' . $version . ' ... ';
+			echo '[QUEUE] Fetching extension "' . $extensionKey . '" v.' . $version . ' ... ';
 
 			$t3xfilename = sprintf('%s_%s.t3x', $extensionKey, $version);
 			@unlink('/tmp/' . $t3xfilename);
-			exec($GLOBALS['CONFIG']['BIN']['t3xutils.phar'] . ' fetch ' . $extensionKey . ' ' . $version . ' /tmp/');
+			exec($GLOBALS['CONFIG']['BIN']['t3xutils.phar'] . ' fetch ' . $extensionKey . ' ' . $version . ' /tmp');
 
 			if (!is_file('/tmp/' . $t3xfilename)) {
 				echo "fail\n";
@@ -86,7 +87,7 @@ class TerTask {
 	}
 
 	protected function updateExtensionsCache() {
-		if (!is_file($this->extensionsXmlFile) && time() - filemtime($this->extensionsXmlFile) > 7200) {
+		if (!is_file($this->extensionsXmlFile) || time() - filemtime($this->extensionsXmlFile) > 7200) {
 			// Update the list of extensions
 			exec($GLOBALS['CONFIG']['BIN']['t3xutils.phar'] . ' updateinfo');
 		}

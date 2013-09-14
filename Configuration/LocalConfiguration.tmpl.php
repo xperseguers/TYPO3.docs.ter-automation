@@ -1,17 +1,6 @@
 <?php
 
 return array(
-	'TER' => array(
-		'mirrors' => array(
-			'http://typo3.org/fileadmin/ter/',
-			'http://ter.rz.tu-clausthal.de/ter/',
-			'http://ter.mittwald.de/ter/',
-			'http://ter.sitedesign.dk/ter/',
-			'http://ter.tue.nl/',
-			'http://mirror-typo3.vinehosting.com/ter/',
-			'http://ter.cablan.net/ter/'
-		),
-	),
 	'DIR' => array(
 		// Path to a working directory for this extension. Will hold
 		// cache files and queue of conversion jobs
