@@ -35,7 +35,7 @@ class TerTask {
 
 	public function run() {
 		$this->updateExtensionsCache();
-		$extensions = $this->getUpdatedExtensionVersions(time() - 86400 * 14);
+		$extensions = $this->getUpdatedExtensionVersions(time() - 8000);
 
 		echo ' [INFO] ' . count($extensions) . ' updated extensions' . "\n";
 		foreach ($extensions as $extensionKey => $versions) {
@@ -51,7 +51,8 @@ class TerTask {
 			exec('mkdir -p ' . $workingDirectory);
 		}
 		$extensionDirectory = $workingDirectory . $extensionKey . '/' . $version;
-		if (!is_dir($extensionDirectory)) {
+		$publishDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/' . $version;
+		if (!is_dir($extensionDirectory) && !is_dir($publishDirectory)) {
 			echo '[QUEUE] Fetching extension "' . $extensionKey . '" v.' . $version . ' ... ';
 
 			$t3xfilename = sprintf('%s_%s.t3x', $extensionKey, $version);
