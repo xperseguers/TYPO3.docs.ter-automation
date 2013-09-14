@@ -66,6 +66,7 @@ class TerTask {
 
 			exec('mkdir -p ' . $extensionDirectory);
 			exec($GLOBALS['CONFIG']['BIN']['t3xutils.phar'] . ' extract /tmp/' . $t3xfilename . ' ' . $extensionDirectory);
+			@unlink('/tmp/' . $t3xfilename);
 
 			echo "done\n";
 		}
