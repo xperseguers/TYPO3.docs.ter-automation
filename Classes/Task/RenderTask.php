@@ -44,6 +44,12 @@ class RenderTask {
 		foreach ($extensionKeys as $extensionKey) {
 			$extensionDirectory = $queueDirectory . $extensionKey . '/';
 			$versions = $this->get_dirs($extensionDirectory);
+
+			if (!count($versions)) {
+				exec('rm -rf ' . $extensionDirectory);
+				continue;
+			}
+
 			foreach ($versions as $version) {
 				$versionDirectory = $extensionDirectory . $version . '/';
 				$buildDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/' . $version;
