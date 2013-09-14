@@ -37,7 +37,7 @@ class TerTask {
 		$this->updateExtensionsCache();
 		$extensions = $this->getUpdatedExtensionVersions(time() - 3600 * 3);
 
-		echo ' [INFO] ' . count($extensions) . ' updated extensions' . "\n";
+		echo '  [INFO] ' . count($extensions) . ' updated extensions' . "\n";
 		foreach ($extensions as $extensionKey => $versions) {
 			foreach ($versions as $version) {
 				$this->enqueueForRendering($extensionKey, $version);
@@ -53,7 +53,7 @@ class TerTask {
 		$extensionDirectory = $queueDirectory . $extensionKey . '/' . $version;
 		$publishDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/' . $version;
 		if (!is_dir($extensionDirectory) && !is_dir($publishDirectory)) {
-			echo '[QUEUE] Fetching extension "' . $extensionKey . '" v.' . $version . ' ... ';
+			echo ' [QUEUE] Fetching extension "' . $extensionKey . '" v.' . $version . ' ... ';
 
 			$t3xfilename = sprintf('%s_%s.t3x', $extensionKey, $version);
 			@unlink('/tmp/' . $t3xfilename);

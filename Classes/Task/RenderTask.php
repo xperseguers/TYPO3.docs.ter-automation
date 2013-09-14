@@ -61,6 +61,8 @@ class RenderTask {
 					}
 					switch ($documentationType) {
 						case static::DOCUMENTATION_TYPE_SPHINX:
+							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (Sphinx project)' . "\n";
+
 							// Clean-up render directory
 							exec('rm -rf ' . $renderDirectory);
 							exec('mkdir -p ' . $renderDirectory);
@@ -97,15 +99,79 @@ EOT;
 							file_put_contents($renderDirectory . 'conf.py', $confpy);
 							symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/Makefile', $renderDirectory . 'Makefile');
 							symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/bin/cron_rebuild.sh', $renderDirectory . 'cron_rebuild.sh');
-							exit;
+
+							// Invoke rendering
+							$cmd = 'cd ' . $renderDirectory . ' && touch REBUILD_REQUESTED && ./cron_rebuild.sh';
+							exec($cmd);
+
+							// TODO? Copy warnings*.txt + possible pdflatext log to output directory
+							break;
+
+						case static::DOCUMENTATION_TYPE_README:
+							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (simple README)' . "\n";
+
+							// Clean-up render directory
+							exec('rm -rf ' . $renderDirectory);
+							exec('mkdir -p ' . $renderDirectory);
+
+							$confpy = file_get_contents(dirname(__FILE__) . '/../../Resources/Private/Templates/conf.py');
+							$confpy = str_replace(
+								'###DOCUMENTATION_RELPATH###',
+								'../queue/' . $extensionKey . '/' . $version . '/',
+								$confpy
+							);
+
+							$cronrebuildconf = <<<EOT
+PROJECT=$extensionKey
+VERSION=$version
+
+# Where to publish documentation
+BUILDDIR=$buildDirectory
+
+# If GITURL is empty then GITDIR is expected to be "ready" to be processed
+GITURL=
+GITDIR=$renderDirectory
+GITBRANCH=
+
+# Path to the documentation within the Git repository
+T3DOCDIR=${versionDirectory}
+
+# Packaging information
+PACKAGE_ZIP=1
+PACKAGE_KEY=typo3cms.extensions.$extensionKey
+PACKAGE_LANGUAGE=default
+EOT;
+							file_put_contents($renderDirectory . 'cron_rebuild.conf', $cronrebuildconf);
+
+							file_put_contents($renderDirectory . 'conf.py', $confpy);
+							symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/Makefile', $renderDirectory . 'Makefile');
+							symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/bin/cron_rebuild.sh', $renderDirectory . 'cron_rebuild.sh');
+
+							// Invoke rendering
+							$cmd = 'cd ' . $renderDirectory . ' && touch REBUILD_REQUESTED && ./cron_rebuild.sh';
+							exec($cmd);
+
+							// TODO? Copy warnings*.txt + possible pdflatext log to output directory
+							break;
+
+						case static::DOCUMENTATION_TYPE_OPENOFFICE:
+							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (OpenOffice NOT YET SUPPORTED!)' . "\n";
+
+							// NOT YET SUPPORTED
 							break;
 					}
 				}
 
-				//$this->removeFromQueue($extensionKey, $version);
+				$this->removeFromQueue($extensionKey, $version);
 			}
 		}
 
+	}
+
+	protected function removeFromQueue($extensionKey, $version) {
+		$queueDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
+		$path = $queueDirectory . $extensionKey . '/' . $version;
+		exec('rm -rf ' . $path);
 	}
 
 	/**
