@@ -35,7 +35,7 @@ class TerTask {
 
 	public function run() {
 		$this->updateExtensionsCache();
-		$extensions = $this->getUpdatedExtensionVersions(time() - 8000);
+		$extensions = $this->getUpdatedExtensionVersions(time() - 3600 * 3);
 
 		echo ' [INFO] ' . count($extensions) . ' updated extensions' . "\n";
 		foreach ($extensions as $extensionKey => $versions) {
@@ -46,11 +46,11 @@ class TerTask {
 	}
 
 	protected function enqueueForRendering($extensionKey, $version) {
-		$workingDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
-		if (!is_dir($workingDirectory)) {
-			exec('mkdir -p ' . $workingDirectory);
+		$queueDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
+		if (!is_dir($queueDirectory)) {
+			exec('mkdir -p ' . $queueDirectory);
 		}
-		$extensionDirectory = $workingDirectory . $extensionKey . '/' . $version;
+		$extensionDirectory = $queueDirectory . $extensionKey . '/' . $version;
 		$publishDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/' . $version;
 		if (!is_dir($extensionDirectory) && !is_dir($publishDirectory)) {
 			echo '[QUEUE] Fetching extension "' . $extensionKey . '" v.' . $version . ' ... ';
