@@ -1,0 +1,3 @@
+[submodule "Resources/Private/Vendor/typo3-docs-typo3-org-resources"]
+	path = Resources/Private/Vendor/typo3-docs-typo3-org-resources
+	url = https://github.com/marble/typo3-docs-typo3-org-resources.git
