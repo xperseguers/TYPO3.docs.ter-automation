@@ -50,9 +50,15 @@ class RenderTask {
 				continue;
 			}
 
+			// Put .htaccess for the extension if needed
+			$baseBuildDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/';
+			if (!is_file($baseBuildDirectory . '.htaccess')) {
+				symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/_htaccess', $baseBuildDirectory . '.htaccess');
+			}
+
 			foreach ($versions as $version) {
 				$versionDirectory = $extensionDirectory . $version . '/';
-				$buildDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/' . $version;
+				$buildDirectory = $baseBuildDirectory . $version;
 
 				if (preg_match('/^\d+\.\d+\.\d+$/', $version)) {
 					if (is_file($versionDirectory . 'Documentation/Index.rst')
@@ -169,6 +175,7 @@ EOT;
 				}
 
 				$this->removeFromQueue($extensionKey, $version);
+				sleep(30);
 			}
 		}
 
