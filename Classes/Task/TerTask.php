@@ -33,6 +33,11 @@ class TerTask {
 
 	protected $extensionsXmlFile = '/tmp/t3xutils.extensions.temp.xml';
 
+	/**
+	 * Runs this task.
+	 *
+	 * @return void
+	 */
 	public function run() {
 		$this->updateExtensionsCache();
 		$extensions = $this->getUpdatedExtensionVersions(time() - 3600 * 3);
@@ -45,6 +50,13 @@ class TerTask {
 		}
 	}
 
+	/**
+	 * Adds an extensionKey/version pair to the rendering queue.
+	 *
+	 * @param string $extensionKey
+	 * @param string $version
+	 * @return void
+	 */
 	protected function enqueueForRendering($extensionKey, $version) {
 		$queueDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
 		if (!is_dir($queueDirectory)) {
@@ -72,6 +84,12 @@ class TerTask {
 		}
 	}
 
+	/**
+	 * Returns a list of TER-updated extensions + version since a given timestamp.
+	 *
+	 * @param integer $since
+	 * @return array
+	 */
 	protected function getUpdatedExtensionVersions($since) {
 		$doc = new \DOMDocument();
 		$doc->loadXML(file_get_contents($this->extensionsXmlFile));
@@ -88,6 +106,11 @@ class TerTask {
 		return $extensions;
 	}
 
+	/**
+	 * Updates the local cache of TER extensions.
+	 *
+	 * @return void
+	 */
 	protected function updateExtensionsCache() {
 		if (!is_file($this->extensionsXmlFile) || time() - filemtime($this->extensionsXmlFile) > 7200) {
 			// Update the list of extensions

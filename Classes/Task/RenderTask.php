@@ -36,6 +36,11 @@ class RenderTask {
 	const DOCUMENTATION_TYPE_README     = 2;
 	const DOCUMENTATION_TYPE_OPENOFFICE = 3;
 
+	/**
+	 * Runs this task.
+	 *
+	 * @return void
+	 */
 	public function run() {
 		$queueDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
 		$renderDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/render/';
@@ -76,94 +81,53 @@ class RenderTask {
 							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (Sphinx project)' . "\n";
 
 							// Clean-up render directory
-							exec('rm -rf ' . $renderDirectory);
-							exec('mkdir -p ' . $renderDirectory);
+							$this->cleanUpDirectory($renderDirectory);
 
-							$confpy = file_get_contents(dirname(__FILE__) . '/../../Resources/Private/Templates/conf.py');
-							$confpy = str_replace(
-								'###DOCUMENTATION_RELPATH###',
-								'../queue/' . $extensionKey . '/' . $version . '/Documentation/',
-								$confpy
+							// Fix version/release in Settings.yml
+							$this->overrideVersionAndReleaseInSettingsYml($versionDirectory, $version);
+
+							$this->createConfPy(
+								$extensionKey,
+								$version,
+								$renderDirectory,
+								'Documentation/'
 							);
 
-							$cronrebuildconf = <<<EOT
-PROJECT=$extensionKey
-VERSION=$version
+							$this->createCronRebuildConf(
+								$extensionKey,
+								$version,
+								$buildDirectory,
+								$renderDirectory,
+								$versionDirectory,
+								'Documentation/'
+							);
 
-# Where to publish documentation
-BUILDDIR=$buildDirectory
-
-# If GITURL is empty then GITDIR is expected to be "ready" to be processed
-GITURL=
-GITDIR=$renderDirectory
-GITBRANCH=
-
-# Path to the documentation within the Git repository
-T3DOCDIR=${versionDirectory}Documentation
-
-# Packaging information
-PACKAGE_ZIP=1
-PACKAGE_KEY=typo3cms.extensions.$extensionKey
-PACKAGE_LANGUAGE=default
-EOT;
-							file_put_contents($renderDirectory . 'cron_rebuild.conf', $cronrebuildconf);
-
-							file_put_contents($renderDirectory . 'conf.py', $confpy);
-							symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/Makefile', $renderDirectory . 'Makefile');
-							symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/bin/cron_rebuild.sh', $renderDirectory . 'cron_rebuild.sh');
-
-							// Invoke rendering
-							$cmd = 'cd ' . $renderDirectory . ' && touch REBUILD_REQUESTED && ./cron_rebuild.sh';
-							exec($cmd);
-
-							// TODO? Copy warnings*.txt + possible pdflatext log to output directory
+							$this->renderProject($renderDirectory);
 							break;
 
 						case static::DOCUMENTATION_TYPE_README:
 							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (simple README)' . "\n";
 
 							// Clean-up render directory
-							exec('rm -rf ' . $renderDirectory);
-							exec('mkdir -p ' . $renderDirectory);
+							$this->cleanUpDirectory($renderDirectory);
 
-							$confpy = file_get_contents(dirname(__FILE__) . '/../../Resources/Private/Templates/conf.py');
-							$confpy = str_replace(
-								'###DOCUMENTATION_RELPATH###',
-								'../queue/' . $extensionKey . '/' . $version . '/',
-								$confpy
+							$this->createConfPy(
+								$extensionKey,
+								$version,
+								$renderDirectory,
+								''
 							);
 
-							$cronrebuildconf = <<<EOT
-PROJECT=$extensionKey
-VERSION=$version
+							$this->createCronRebuildConf(
+								$extensionKey,
+								$version,
+								$buildDirectory,
+								$renderDirectory,
+								$versionDirectory,
+								''
+							);
 
-# Where to publish documentation
-BUILDDIR=$buildDirectory
-
-# If GITURL is empty then GITDIR is expected to be "ready" to be processed
-GITURL=
-GITDIR=$renderDirectory
-GITBRANCH=
-
-# Path to the documentation within the Git repository
-T3DOCDIR=${versionDirectory}
-
-# Packaging information
-PACKAGE_ZIP=1
-PACKAGE_KEY=typo3cms.extensions.$extensionKey
-PACKAGE_LANGUAGE=default
-EOT;
-							file_put_contents($renderDirectory . 'cron_rebuild.conf', $cronrebuildconf);
-
-							file_put_contents($renderDirectory . 'conf.py', $confpy);
-							symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/Makefile', $renderDirectory . 'Makefile');
-							symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/bin/cron_rebuild.sh', $renderDirectory . 'cron_rebuild.sh');
-
-							// Invoke rendering
-							$cmd = 'cd ' . $renderDirectory . ' && touch REBUILD_REQUESTED && ./cron_rebuild.sh';
-							exec($cmd);
-
-							// TODO? Copy warnings*.txt + possible pdflatext log to output directory
+							$this->renderProject($renderDirectory);
 							break;
 
 						case static::DOCUMENTATION_TYPE_OPENOFFICE:
@@ -175,12 +139,140 @@ EOT;
 				}
 
 				$this->removeFromQueue($extensionKey, $version);
-				sleep(30);
+				sleep(5);
 			}
 		}
 
 	}
 
+	/**
+	 * Overrides the version and release in Settings.yml (because developers simply tend to forget about
+	 * adapting this info prior to uploading their extension to TER).
+	 *
+	 * @param string $path
+	 * @param string $version
+	 * @return void
+	 */
+	protected function overrideVersionAndReleaseInSettingsYml($path, $version) {
+		$path = rtrim($path, '/') . '/';
+		$filenames = array('Documentation/Settings.yml');
+
+		// Search for other translated versions of Settings.yml
+		$directories = $this->get_dirs($path . 'Documentation/');
+		foreach ($directories as $directory) {
+			if (preg_match('/^Localization\./', $directory)) {
+				$localizationDirectory = $path . 'Documentation/' . $directory . '/Settings.yml';
+				if (!is_file($localizationDirectory)) {
+					copy($path . 'Documentation/Settings.yml', $localizationDirectory);
+				}
+				$filenames[] = 'Documentation/' . $directory . '/Settings.yml';
+			}
+		}
+
+		// release is actually the "version" from TER
+		$release = $version;
+		// whereas version is a two digit alternative of the release number
+		$parts = explode('.', $release);
+		$version = $parts[0] . '.' . $parts[1];
+
+		foreach ($filenames as $filename) {
+			$contents = file_get_contents($path . $filename);
+			$contents = preg_replace('/^(\s+version): (.*)/m', '\1: ' . $version, $contents);
+			$contents = preg_replace('/^(\s+release): (.*)$/m', '\1: ' . $release, $contents);
+			file_put_contents($path . $filename, $contents);
+		}
+	}
+
+	/**
+	 * Creates a conf.py configuration file.
+	 *
+	 * @param string $extensionKey
+	 * @param string $version
+	 * @param string $renderDirectory
+	 * @param string $prefix Optional prefix directory ("Documentation/")
+	 * @return void
+	 */
+	protected function createConfPy($extensionKey, $version, $renderDirectory, $prefix) {
+		$contents = file_get_contents(dirname(__FILE__) . '/../../Resources/Private/Templates/conf.py');
+		$contents = str_replace(
+			'###DOCUMENTATION_RELPATH###',
+			'../queue/' . $extensionKey . '/' . $version . '/' . $prefix,
+			$contents
+		);
+		file_put_contents($renderDirectory . 'conf.py', $contents);
+	}
+
+	/**
+	 * Creates a cron_rebuild.conf configuration file.
+	 *
+	 * @param string $extensionKey
+	 * @param string $version
+	 * @param string $buildDirectory
+	 * @param string $renderDirectory
+	 * @param string $versionDirectory
+	 * @param string $prefix Optional prefix directory ("Documentation/")
+	 * @return void
+	 */
+	protected function createCronRebuildConf($extensionKey, $version, $buildDirectory, $renderDirectory, $versionDirectory, $prefix) {
+		$contents = <<<EOT
+PROJECT=$extensionKey
+VERSION=$version
+
+# Where to publish documentation
+BUILDDIR=$buildDirectory
+
+# If GITURL is empty then GITDIR is expected to be "ready" to be processed
+GITURL=
+GITDIR=$renderDirectory
+GITBRANCH=
+
+# Path to the documentation within the Git repository
+T3DOCDIR=${versionDirectory}${prefix}
+
+# Packaging information
+PACKAGE_ZIP=1
+PACKAGE_KEY=typo3cms.extensions.$extensionKey
+PACKAGE_LANGUAGE=default
+EOT;
+
+		file_put_contents($renderDirectory . 'cron_rebuild.conf', $contents);
+	}
+
+	/**
+	 * Renders a Sphinx project.
+	 *
+	 * @param string $renderDirectory
+	 * @return void
+	 */
+	protected function renderProject($renderDirectory) {
+		symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/Makefile', $renderDirectory . 'Makefile');
+		symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/bin/cron_rebuild.sh', $renderDirectory . 'cron_rebuild.sh');
+
+		// Invoke rendering
+		$cmd = 'cd ' . $renderDirectory . ' && touch REBUILD_REQUESTED && ./cron_rebuild.sh';
+		exec($cmd);
+
+		// TODO? Copy warnings*.txt + possible pdflatex log to output directory
+	}
+
+	/**
+	 * Cleans-up a directory.
+	 *
+	 * @param string $path
+	 * @return void
+	 */
+	protected function cleanUpDirectory($path) {
+		exec('rm -rf ' . escapeshellarg($path));
+		exec('mkdir -p ' . escapeshellarg($path));
+	}
+
+	/**
+	 * Removes an extensionKey/version pair from the rendering queue.
+	 *
+	 * @param string $extensionKey
+	 * @param string $version
+	 * @return void
+	 */
 	protected function removeFromQueue($extensionKey, $version) {
 		$queueDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
 		$path = $queueDirectory . $extensionKey . '/' . $version;
