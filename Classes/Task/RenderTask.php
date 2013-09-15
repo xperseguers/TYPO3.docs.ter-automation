@@ -211,7 +211,8 @@ YAML;
 									$buildDirectory,
 									$renderDirectory,
 									$versionDirectory,
-									'Documentation/'
+									'Documentation/',
+									FALSE
 								);
 
 								$this->renderProject($renderDirectory);
@@ -293,9 +294,12 @@ YAML;
 	 * @param string $renderDirectory
 	 * @param string $versionDirectory
 	 * @param string $prefix Optional prefix directory ("Documentation/")
+	 * @param boolean $createArchive
 	 * @return void
 	 */
-	protected function createCronRebuildConf($extensionKey, $version, $buildDirectory, $renderDirectory, $versionDirectory, $prefix) {
+	protected function createCronRebuildConf($extensionKey, $version, $buildDirectory, $renderDirectory, $versionDirectory, $prefix, $createArchive = TRUE) {
+		$packageZip = $createArchive ? '1' : '0';
+
 		$contents = <<<EOT
 PROJECT=$extensionKey
 VERSION=$version
@@ -312,7 +316,7 @@ GITBRANCH=
 T3DOCDIR=${versionDirectory}${prefix}
 
 # Packaging information
-PACKAGE_ZIP=1
+PACKAGE_ZIP=$packageZip
 PACKAGE_KEY=typo3cms.extensions.$extensionKey
 PACKAGE_LANGUAGE=default
 EOT;
