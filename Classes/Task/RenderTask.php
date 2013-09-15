@@ -76,7 +76,7 @@ class RenderTask {
 							$confpy = file_get_contents(dirname(__FILE__) . '/../../Resources/Private/Templates/conf.py');
 							$confpy = str_replace(
 								'###DOCUMENTATION_RELPATH###',
-								'../queue/' . $extensionKey . '/' . $version . '/',
+								'../queue/' . $extensionKey . '/' . $version . '/Documentation/',
 								$confpy
 							);
 
