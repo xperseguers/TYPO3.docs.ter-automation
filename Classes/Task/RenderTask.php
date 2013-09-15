@@ -149,7 +149,7 @@ class RenderTask {
 							// Convert OpenOffice to Sphinx
 							$manualFilename = $versionDirectory . 'doc/manual.sxw';
 							$cmd = 'python ' .
-								dirname(__FILE__) . 'Resources/Private/Vendor/RestTools/T3PythonDocBuilderPackage/src/T3PythonDocBuilder/t3pdb_sxw2html.py ' .
+								dirname(__FILE__) . '/../../Resources/Private/Vendor/RestTools/T3PythonDocBuilderPackage/src/T3PythonDocBuilder/t3pdb_sxw2html.py ' .
 								escapeshellarg($manualFilename) . ' ' .
 								escapeshellarg($renderDirectory);
 							exec($cmd);
