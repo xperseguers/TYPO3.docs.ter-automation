@@ -77,6 +77,10 @@ class RenderTask {
 						$documentationType = static::DOCUMENTATION_TYPE_UNKNOWN;
 					}
 					switch ($documentationType) {
+
+						// ---------------------------------
+						// Sphinx documentation
+						// ---------------------------------
 						case static::DOCUMENTATION_TYPE_SPHINX:
 							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (Sphinx project)' . "\n";
 
@@ -105,6 +109,9 @@ class RenderTask {
 							$this->renderProject($renderDirectory);
 							break;
 
+						// ---------------------------------
+						// README.rst documentation
+						// ---------------------------------
 						case static::DOCUMENTATION_TYPE_README:
 							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (simple README)' . "\n";
 
@@ -130,10 +137,78 @@ class RenderTask {
 							$this->renderProject($renderDirectory);
 							break;
 
+						// ---------------------------------
+						// OpenOffice documentation
+						// ---------------------------------
 						case static::DOCUMENTATION_TYPE_OPENOFFICE:
-							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (OpenOffice NOT YET SUPPORTED!)' . "\n";
+							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (OpenOffice)' . "\n";
 
-							// NOT YET SUPPORTED
+							// Clean-up render directory
+							$this->cleanUpDirectory($renderDirectory);
+
+							// Convert OpenOffice to Sphinx
+							$manualFilename = $versionDirectory . 'doc/manual.sxw';
+							$cmd = 'python ' .
+								dirname(__FILE__) . 'Resources/Private/Vendor/RestTools/T3PythonDocBuilderPackage/src/T3PythonDocBuilder/t3pdb_sxw2html.py ' .
+								escapeshellarg($manualFilename) . ' ' .
+								escapeshellarg($renderDirectory);
+							exec($cmd);
+
+							if (is_file($renderDirectory . 't3pdb/Documentation/Index.rst')) {
+								// Move the generated Sphinx project to the original extension directory
+								exec('mv ' . escapeshellarg($renderDirectory . 't3pdb/Documentation') . ' ' . escapeshellarg($versionDirectory));
+
+								// We now lack a Settings.yml file
+								$_EXTKEY = $extensionKey;
+								$EM_CONF = array();
+								include($versionDirectory . 'ext_emconf.php');
+								$copyright = date('Y');
+								$title = $EM_CONF[$_EXTKEY]['title'];
+
+								$configuration = <<<YAML
+# This is the project specific Settings.yml file.
+# Place Sphinx specific build information here.
+# Settings given here will replace the settings of 'conf.py'.
+
+---
+conf.py:
+  copyright: $copyright
+  project: $title
+  version: 1.0
+  release: 1.0.0
+...
+
+YAML;
+								file_put_contents($versionDirectory . 'Documentation/Settings.yml', $configuration);
+
+								// ---------------------------------
+								// Sphinx from OOo documentation
+								// ---------------------------------
+
+								// Clean-up render directory
+								$this->cleanUpDirectory($renderDirectory);
+
+								// Fix version/release in Settings.yml
+								$this->overrideVersionAndReleaseInSettingsYml($versionDirectory, $version);
+
+								$this->createConfPy(
+									$extensionKey,
+									$version,
+									$renderDirectory,
+									'Documentation/'
+								);
+
+								$this->createCronRebuildConf(
+									$extensionKey,
+									$version,
+									$buildDirectory,
+									$renderDirectory,
+									$versionDirectory,
+									'Documentation/'
+								);
+
+								$this->renderProject($renderDirectory);
+							}
 							break;
 					}
 				}
