@@ -1,4 +1,6 @@
 <?php
+namespace Causal\Docst3o\Task;
+
 /***************************************************************
  *  Copyright notice
  *
@@ -21,8 +23,6 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-
-namespace Causal\Docst3o\Task;
 
 /**
  * Scheduler task to fetch new extensions from TYPO3 Extension Repository (TER).

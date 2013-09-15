@@ -1,4 +1,6 @@
 <?php
+namespace Causal\Docst3o\Task;
+
 /***************************************************************
  *  Copyright notice
  *
@@ -21,8 +23,6 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-
-namespace Causal\Docst3o\Task;
 
 /**
  * Scheduler task to render documentation from queue.
@@ -69,6 +69,12 @@ class RenderTask {
 					if (is_file($versionDirectory . 'Documentation/Index.rst')
 						&& is_file($versionDirectory . 'Documentation/Settings.yml')) {
 						$documentationType = static::DOCUMENTATION_TYPE_SPHINX;
+
+						if (is_file($versionDirectory . 'Documentation/_Fr/UserManual.rst')) {
+							// This is most probably a garbage documentation coming from the old
+							// documentation template and automatically included with the Extension Builder
+							$documentationType = static::DOCUMENTATION_TYPE_UNKNOWN;
+						}
 					} elseif (is_file($versionDirectory . 'README.rst')) {
 						$documentationType = static::DOCUMENTATION_TYPE_README;
 					} elseif (is_file($versionDirectory . 'doc/manual.sxw')) {
