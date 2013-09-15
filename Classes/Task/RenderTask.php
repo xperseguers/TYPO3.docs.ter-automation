@@ -162,6 +162,7 @@ class RenderTask {
 
 							if (is_file($renderDirectory . 't3pdb/Documentation/Index.rst')) {
 								// Move the generated Sphinx project to the original extension directory
+								exec('rm -rf ' . escapeshellarg($versionDirectory) . 'Documentation');
 								exec('mv ' . escapeshellarg($renderDirectory . 't3pdb/Documentation') . ' ' . escapeshellarg($versionDirectory));
 
 								// We now lack a Settings.yml file
