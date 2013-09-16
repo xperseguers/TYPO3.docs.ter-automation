@@ -370,6 +370,7 @@ EOT;
 			'lastupdated' => time(),
 			'format' => $format,
 		);
+		ksort($references);
 		file_put_contents($referenceFilename, json_encode($references));
 	}
 
