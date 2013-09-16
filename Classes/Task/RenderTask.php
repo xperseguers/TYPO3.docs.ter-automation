@@ -113,6 +113,9 @@ class RenderTask {
 							);
 
 							$this->renderProject($renderDirectory);
+							if (is_file($buildDirectory . '/Index.html')) {
+								$this->addReference($extensionKey, $documentationType);
+							}
 							break;
 
 						// ---------------------------------
@@ -141,6 +144,9 @@ class RenderTask {
 							);
 
 							$this->renderProject($renderDirectory);
+							if (is_file($buildDirectory . '/Index.html')) {
+								$this->addReference($extensionKey, $documentationType);
+							}
 							break;
 
 						// ---------------------------------
@@ -216,6 +222,9 @@ YAML;
 								);
 
 								$this->renderProject($renderDirectory);
+								if (is_file($buildDirectory . '/Index.html')) {
+									$this->addReference($extensionKey, $documentationType);
+								}
 							}
 							break;
 					}
@@ -339,6 +348,29 @@ EOT;
 		exec($cmd);
 
 		// TODO? Copy warnings*.txt + possible pdflatex log to output directory
+	}
+
+	/**
+	 * Adds a reference to the documentation (e.g., used by EXT:sphinx).
+	 *
+	 * @param string $extensionKey
+	 * @param string $format
+	 * @return void
+	 */
+	protected function addReference($extensionKey, $format) {
+		$referenceFilename = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/manuals.json';
+		$references = array();
+		if (is_file($referenceFilename)) {
+			$references = json_decode(file_get_contents($referenceFilename), TRUE);
+			if (!is_array($references)) {
+				$references = array();
+			}
+		}
+		$references[$extensionKey] = array(
+			'lastupdated' => time(),
+			'format' => $format,
+		);
+		file_put_contents($referenceFilename, json_encode($references));
 	}
 
 	/**
