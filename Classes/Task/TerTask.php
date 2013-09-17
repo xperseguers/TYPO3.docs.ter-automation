@@ -40,7 +40,7 @@ class TerTask {
 	 */
 	public function run() {
 		$this->updateExtensionsCache();
-		$extensions = $this->getUpdatedExtensionVersions(time() - 3600 * 3);
+		$extensions = $this->getUpdatedExtensionVersions(time() - 3600 * 12);
 
 		echo '  [INFO] ' . count($extensions) . ' updated extensions' . "\n";
 		foreach ($extensions as $extensionKey => $versions) {
