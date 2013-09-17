@@ -55,11 +55,7 @@ class RenderTask {
 				continue;
 			}
 
-			// Put .htaccess for the extension if needed
 			$baseBuildDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/';
-			if (!is_file($baseBuildDirectory . '.htaccess')) {
-				symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/_htaccess', $baseBuildDirectory . '.htaccess');
-			}
 
 			foreach ($versions as $version) {
 				$versionDirectory = $extensionDirectory . $version . '/';
@@ -233,6 +229,12 @@ YAML;
 				$this->removeFromQueue($extensionKey, $version);
 				sleep(5);
 			}
+
+			// Put .htaccess for the extension if needed
+			if (is_dir($baseBuildDirectory) && !is_file($baseBuildDirectory . '.htaccess')) {
+				symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/_htaccess', $baseBuildDirectory . '.htaccess');
+			}
+
 		}
 
 	}
