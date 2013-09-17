@@ -110,7 +110,7 @@ class RenderTask {
 
 							$this->renderProject($renderDirectory);
 							if (is_file($buildDirectory . '/Index.html')) {
-								$this->addReference($extensionKey, $documentationType);
+								$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
 							}
 							break;
 
@@ -141,7 +141,7 @@ class RenderTask {
 
 							$this->renderProject($renderDirectory);
 							if (is_file($buildDirectory . '/Index.html')) {
-								$this->addReference($extensionKey, $documentationType);
+								$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
 							}
 							break;
 
@@ -219,7 +219,7 @@ YAML;
 
 								$this->renderProject($renderDirectory);
 								if (is_file($buildDirectory . '/Index.html')) {
-									$this->addReference($extensionKey, $documentationType);
+									$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
 								}
 							}
 							break;
@@ -357,9 +357,13 @@ EOT;
 	 *
 	 * @param string $extensionKey
 	 * @param string $format
+	 * @param string $extensionDirectory
+	 * @param string $buildDirectory
 	 * @return void
 	 */
-	protected function addReference($extensionKey, $format) {
+	protected function addReference($extensionKey, $format, $extensionDirectory, $buildDirectory) {
+		$extensionDirectory = rtrim($extensionDirectory, '/') . '/';
+		$buildDirectory = rtrim($buildDirectory, '/');	// No trailing slash here!
 		$referenceFilename = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/manuals.json';
 		$references = array();
 		if (is_file($referenceFilename)) {
@@ -368,10 +372,26 @@ EOT;
 				$references = array();
 			}
 		}
+
 		$references[$extensionKey] = array(
 			'lastupdated' => time(),
 			'format' => $format,
 		);
+
+		if ($format == static::DOCUMENTATION_TYPE_SPHINX) {
+			$directories = $this->get_dirs($extensionDirectory . 'Documentation/');
+			foreach ($directories as $directory) {
+				if (preg_match('/^Localization\.(.*)/', $directory, $matches)) {
+					$locale = str_replace('_', '-', strtolower($matches[1]));
+					$version = basename($buildDirectory);
+					$localeDirectory = $buildDirectory . '/../' . $locale . '/' . $version . '/';
+					if (is_file($localeDirectory . 'Index.html')) {
+						$references[$extensionKey]['localizations'][] = $matches[1];
+					}
+				}
+			}
+		}
+
 		ksort($references);
 		file_put_contents($referenceFilename, json_encode($references));
 	}
