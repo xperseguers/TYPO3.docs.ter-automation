@@ -167,6 +167,12 @@ class RenderTask {
 								exec('rm -rf ' . escapeshellarg($versionDirectory) . 'Documentation');
 								exec('mv ' . escapeshellarg($renderDirectory . 't3pdb/Documentation') . ' ' . escapeshellarg($versionDirectory));
 
+								if (!is_file($versionDirectory . 'Includes.txt')) {
+									// This file is often needed, and may crash the rendering if it is not there.
+									// This is most probably a bug in the OOo converter
+									exec('touch ' . escapeshellarg($versionDirectory . 'Includes.txt'));
+								}
+
 								// We now lack a Settings.yml file
 								$_EXTKEY = $extensionKey;
 								$EM_CONF = array();
