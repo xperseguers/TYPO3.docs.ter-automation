@@ -62,8 +62,7 @@ class RenderTask {
 				$buildDirectory = $baseBuildDirectory . $version;
 
 				if (preg_match('/^\d+\.\d+\.\d+$/', $version)) {
-					if (is_file($versionDirectory . 'Documentation/Index.rst')
-						&& is_file($versionDirectory . 'Documentation/Settings.yml')) {
+					if (is_file($versionDirectory . 'Documentation/Index.rst')) {
 						$documentationType = static::DOCUMENTATION_TYPE_SPHINX;
 
 						if (is_file($versionDirectory . 'Documentation/_Fr/UserManual.rst')) {
@@ -88,6 +87,11 @@ class RenderTask {
 
 							// Clean-up render directory
 							$this->cleanUpDirectory($renderDirectory);
+
+
+							if (!is_file($versionDirectory . 'Documentation/Settings.yml')) {
+								$this->createSettingsYml($versionDirectory, $extensionKey);
+							}
 
 							// Fix version/release in Settings.yml
 							$this->overrideVersionAndReleaseInSettingsYml($versionDirectory, $version);
@@ -174,27 +178,7 @@ class RenderTask {
 								}
 
 								// We now lack a Settings.yml file
-								$_EXTKEY = $extensionKey;
-								$EM_CONF = array();
-								include($versionDirectory . 'ext_emconf.php');
-								$copyright = date('Y');
-								$title = $EM_CONF[$_EXTKEY]['title'];
-
-								$configuration = <<<YAML
-# This is the project specific Settings.yml file.
-# Place Sphinx specific build information here.
-# Settings given here will replace the settings of 'conf.py'.
-
----
-conf.py:
-  copyright: $copyright
-  project: $title
-  version: 1.0
-  release: 1.0.0
-...
-
-YAML;
-								file_put_contents($versionDirectory . 'Documentation/Settings.yml', $configuration);
+								$this->createSettingsYml($versionDirectory, $extensionKey);
 
 								// ---------------------------------
 								// Sphinx from OOo documentation
@@ -281,6 +265,39 @@ YAML;
 			$contents = preg_replace('/^(\s+release): (.*)$/m', '\1: ' . $release, $contents);
 			file_put_contents($path . $filename, $contents);
 		}
+	}
+
+	/**
+	 * Creates a default Settings.yml configuration file.
+	 *
+	 * @param string $extensionDirectory
+	 * @param string $extensionKey
+	 * @return void
+	 */
+	protected function createSettingsYml($extensionDirectory, $extensionKey) {
+		$extensionDirectory = rtrim($extensionDirectory, '/') . '/';
+
+		$_EXTKEY = $extensionKey;
+		$EM_CONF = array();
+		include($extensionDirectory . 'ext_emconf.php');
+		$copyright = date('Y');
+		$title = $EM_CONF[$_EXTKEY]['title'];
+
+		$configuration = <<<YAML
+# This is the project specific Settings.yml file.
+# Place Sphinx specific build information here.
+# Settings given here will replace the settings of 'conf.py'.
+
+---
+conf.py:
+  copyright: $copyright
+  project: $title
+  version: 1.0
+  release: 1.0.0
+...
+
+YAML;
+		file_put_contents($extensionDirectory .  'Documentation/Settings.yml', $configuration);
 	}
 
 	/**
