@@ -112,7 +112,7 @@ class TerTask {
 	 * @return void
 	 */
 	protected function updateExtensionsCache() {
-		if (!is_file($this->extensionsXmlFile) || time() - filemtime($this->extensionsXmlFile) > 7200) {
+		if (!is_file($this->extensionsXmlFile) || time() - filemtime($this->extensionsXmlFile) > 3590) {
 			// Update the list of extensions
 			exec($GLOBALS['CONFIG']['BIN']['t3xutils.phar'] . ' updateinfo');
 		}
