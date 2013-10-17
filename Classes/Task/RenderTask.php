@@ -402,6 +402,10 @@ EOT;
 		);
 
 		if ($format == static::DOCUMENTATION_TYPE_SPHINX) {
+			if (count(glob($buildDirectory . '/_pdf/*.pdf')) > 0) {
+				$references[$extensionKey]['pdf'][] = 'default';
+			}
+
 			$directories = $this->get_dirs($extensionDirectory . 'Documentation/');
 			foreach ($directories as $directory) {
 				if (preg_match('/^Localization\.(.*)/', $directory, $matches)) {
@@ -410,6 +414,10 @@ EOT;
 					$localeDirectory = $buildDirectory . '/../' . $locale . '/' . $version . '/';
 					if (is_file($localeDirectory . 'Index.html')) {
 						$references[$extensionKey]['localizations'][] = $matches[1];
+
+						if (count(glob($localeDirectory . '_pdf/*.pdf')) > 0) {
+							$references[$extensionKey]['pdf'][] = $matches[1];
+						}
 					}
 				}
 			}
