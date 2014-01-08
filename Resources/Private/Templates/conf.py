@@ -43,7 +43,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'Index'
+master_doc = '###MASTER_DOC###'
 
 # General information about the project.
 project   = u'Project name'

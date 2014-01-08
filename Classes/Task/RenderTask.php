@@ -131,7 +131,8 @@ class RenderTask {
 								$extensionKey,
 								$version,
 								$renderDirectory,
-								''
+								'',
+								'README'
 							);
 
 							$this->createCronRebuildConf(
@@ -307,13 +308,18 @@ YAML;
 	 * @param string $version
 	 * @param string $renderDirectory
 	 * @param string $prefix Optional prefix directory ("Documentation/")
+	 * @param string $masterDocument
 	 * @return void
 	 */
-	protected function createConfPy($extensionKey, $version, $renderDirectory, $prefix) {
+	protected function createConfPy($extensionKey, $version, $renderDirectory, $prefix, $masterDocument = 'Index') {
+	    $replacements = array(
+			'###DOCUMENTATION_RELPATH###' => '../queue/' . $extensionKey . '/' . $version . '/' . $prefix,
+			'###MASTER_DOC###' => $masterDocument,
+		);
 		$contents = file_get_contents(dirname(__FILE__) . '/../../Resources/Private/Templates/conf.py');
 		$contents = str_replace(
-			'###DOCUMENTATION_RELPATH###',
-			'../queue/' . $extensionKey . '/' . $version . '/' . $prefix,
+			array_keys($replacements),
+			array_values($replacements),
 			$contents
 		);
 		file_put_contents($renderDirectory . 'conf.py', $contents);
