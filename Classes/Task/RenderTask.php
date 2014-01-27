@@ -174,15 +174,22 @@ class RenderTask {
 								escapeshellarg($renderDirectory);
 							exec($cmd);
 
-							if (is_file($renderDirectory . 't3pdb/Documentation/Index.rst')) {
+							if (!is_file($renderDirectory . 't3pdb/Documentation/Index.rst')) {
+								echo '  [ERROR] Conversion from manual.sxw failed' . "\n";
+							} else {
 								// Move the generated Sphinx project to the original extension directory
 								exec('rm -rf ' . escapeshellarg($versionDirectory) . 'Documentation');
 								exec('mv ' . escapeshellarg($renderDirectory . 't3pdb/Documentation') . ' ' . escapeshellarg($versionDirectory));
 
-								if (!is_file($versionDirectory . 'Includes.txt')) {
+								if (!is_file($versionDirectory . 'Documentation/Includes.txt')) {
 									// This file is often needed, and may crash the rendering if it is not there.
 									// This is most probably a bug in the OOo converter
-									exec('touch ' . escapeshellarg($versionDirectory . 'Includes.txt'));
+									exec('touch ' . escapeshellarg($versionDirectory . 'Documentation/Includes.txt'));
+								}
+								if (!is_file($versionDirectory . 'Documentation/Targets.rst')) {
+									// This file is often needed, and may crash the rendering if it is not there.
+									// This is most probably a bug in the OOo converter
+									exec('touch ' . escapeshellarg($versionDirectory . 'Documentation/Targets.rst'));
 								}
 
 								// We now lack a Settings.yml file
