@@ -4,7 +4,7 @@ namespace Causal\Docst3o\Task;
 /***************************************************************
  *  Copyright notice
  *
- *  (c) 2013 Xavier Perseguers <xavier@causal.ch>
+ *  (c) 2013-2014 Xavier Perseguers <xavier@causal.ch>
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -42,7 +42,7 @@ class TerTask {
 		$this->updateExtensionsCache();
 		$extensions = $this->getUpdatedExtensionVersions(time() - 3600 * 12);
 
-		echo '  [INFO] ' . count($extensions) . ' updated extensions' . "\n";
+		echo '   [INFO] ' . count($extensions) . ' updated extensions' . "\n";
 		foreach ($extensions as $extensionKey => $versions) {
 			foreach ($versions as $version) {
 				$this->enqueueForRendering($extensionKey, $version);
@@ -58,6 +58,8 @@ class TerTask {
 	 * @return void
 	 */
 	protected function enqueueForRendering($extensionKey, $version) {
+		echo '   [INFO] Enqueuing ' . $extensionKey . ' v.' . $version . "\n";
+
 		$queueDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
 		if (!is_dir($queueDirectory)) {
 			exec('mkdir -p ' . $queueDirectory);
@@ -65,7 +67,7 @@ class TerTask {
 		$extensionDirectory = $queueDirectory . $extensionKey . '/' . $version;
 		$publishDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/' . $version;
 		if (!is_dir($extensionDirectory) && !is_dir($publishDirectory)) {
-			echo ' [QUEUE] Fetching extension "' . $extensionKey . '" v.' . $version . ' ... ';
+			echo '  [QUEUE] Fetching extension "' . $extensionKey . '" v.' . $version . ' ... ';
 
 			$t3xfilename = sprintf('%s_%s.t3x', $extensionKey, $version);
 			@unlink('/tmp/' . $t3xfilename);
@@ -124,5 +126,3 @@ $GLOBALS['CONFIG'] = require_once(dirname(__FILE__) . '/../../Configuration/Loca
 
 $task = new TerTask();
 $task->run();
-
-?>

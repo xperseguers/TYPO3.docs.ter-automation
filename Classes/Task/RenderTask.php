@@ -4,7 +4,7 @@ namespace Causal\Docst3o\Task;
 /***************************************************************
  *  Copyright notice
  *
- *  (c) 2013 Xavier Perseguers <xavier@causal.ch>
+ *  (c) 2013-2014 Xavier Perseguers <xavier@causal.ch>
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -51,6 +51,7 @@ class RenderTask {
 			$versions = $this->get_dirs($extensionDirectory);
 
 			if (!count($versions)) {
+				echo '   [INFO] No version found for ' . $extensionKey . ': removing from queue' . "\n";
 				exec('rm -rf ' . $extensionDirectory);
 				continue;
 			}
@@ -58,6 +59,7 @@ class RenderTask {
 			$baseBuildDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/';
 
 			foreach ($versions as $version) {
+				echo '   [INFO] Processing ' . $extensionKey . ' v.' . $version . "\n";
 				$versionDirectory = $extensionDirectory . $version . '/';
 				$buildDirectory = $baseBuildDirectory . $version;
 
@@ -68,6 +70,7 @@ class RenderTask {
 						if (is_file($versionDirectory . 'Documentation/_Fr/UserManual.rst')) {
 							// This is most probably a garbage documentation coming from the old
 							// documentation template and automatically included with the Extension Builder
+							echo '[WARNING] Garbage documentation from template found: skipping rendering' . "\n";
 							$documentationType = static::DOCUMENTATION_TYPE_UNKNOWN;
 						}
 					} elseif (is_file($versionDirectory . 'README.rst')) {
@@ -213,6 +216,10 @@ class RenderTask {
 									$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
 								}
 							}
+							break;
+
+						default:
+							echo '[WARNING] Unknown documentation format: skipping rendering' . "\n";
 							break;
 					}
 				}
@@ -488,5 +495,3 @@ $GLOBALS['CONFIG'] = require_once(dirname(__FILE__) . '/../../Configuration/Loca
 
 $task = new RenderTask();
 $task->run();
-
-?>
