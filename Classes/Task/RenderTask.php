@@ -86,7 +86,7 @@ class RenderTask {
 						// Sphinx documentation
 						// ---------------------------------
 						case static::DOCUMENTATION_TYPE_SPHINX:
-							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (Sphinx project)' . "\n";
+							echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (Sphinx project)' . "\n";
 
 							// Clean-up render directory
 							$this->cleanUpDirectory($renderDirectory);
@@ -116,7 +116,9 @@ class RenderTask {
 							);
 
 							$this->renderProject($renderDirectory);
-							if (is_file($buildDirectory . '/Index.html')) {
+							if (!is_file($buildDirectory . '/Index.html')) {
+								echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
+							} else {
 								$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
 							}
 							break;
@@ -125,7 +127,7 @@ class RenderTask {
 						// README.rst documentation
 						// ---------------------------------
 						case static::DOCUMENTATION_TYPE_README:
-							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (simple README)' . "\n";
+							echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (simple README)' . "\n";
 
 							// Clean-up render directory
 							$this->cleanUpDirectory($renderDirectory);
@@ -148,7 +150,9 @@ class RenderTask {
 							);
 
 							$this->renderProject($renderDirectory);
-							if (is_file($buildDirectory . '/Index.html')) {
+							if (!is_file($buildDirectory . '/Index.html')) {
+								echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
+							} else {
 								$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
 							}
 							break;
@@ -157,7 +161,7 @@ class RenderTask {
 						// OpenOffice documentation
 						// ---------------------------------
 						case static::DOCUMENTATION_TYPE_OPENOFFICE:
-							echo '[RENDER] ' . $extensionKey . ' ' . $version . ' (OpenOffice)' . "\n";
+							echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (OpenOffice)' . "\n";
 
 							// Clean-up render directory
 							$this->cleanUpDirectory($renderDirectory);
@@ -212,7 +216,9 @@ class RenderTask {
 								);
 
 								$this->renderProject($renderDirectory);
-								if (is_file($buildDirectory . '/Index.html')) {
+								if (!is_file($buildDirectory . '/Index.html')) {
+									echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
+								} else {
 									$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
 								}
 							}
