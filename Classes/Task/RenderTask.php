@@ -119,7 +119,7 @@ class RenderTask {
 							if (!is_file($buildDirectory . '/Index.html')) {
 								echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
 							} else {
-								$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
+								$this->addReference($extensionKey, $documentationType, $version, $versionDirectory, $buildDirectory);
 							}
 							break;
 
@@ -153,7 +153,7 @@ class RenderTask {
 							if (!is_file($buildDirectory . '/Index.html')) {
 								echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
 							} else {
-								$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
+								$this->addReference($extensionKey, $documentationType, $version, $versionDirectory, $buildDirectory);
 							}
 							break;
 
@@ -226,7 +226,7 @@ class RenderTask {
 								if (!is_file($buildDirectory . '/Index.html')) {
 									echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
 								} else {
-									$this->addReference($extensionKey, $documentationType, $versionDirectory, $buildDirectory);
+									$this->addReference($extensionKey, $documentationType, $version, $versionDirectory, $buildDirectory);
 								}
 							}
 							break;
@@ -406,11 +406,12 @@ EOT;
 	 *
 	 * @param string $extensionKey
 	 * @param string $format
+	 * @param string $version
 	 * @param string $extensionDirectory
 	 * @param string $buildDirectory
 	 * @return void
 	 */
-	protected function addReference($extensionKey, $format, $extensionDirectory, $buildDirectory) {
+	protected function addReference($extensionKey, $format, $version, $extensionDirectory, $buildDirectory) {
 		$extensionDirectory = rtrim($extensionDirectory, '/') . '/';
 		$buildDirectory = rtrim($buildDirectory, '/');	// No trailing slash here!
 		$referenceFilename = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/manuals.json';
@@ -425,6 +426,7 @@ EOT;
 		$references[$extensionKey] = array(
 			'lastupdated' => time(),
 			'format' => $format,
+			'version' => $version,
 		);
 
 		if ($format == static::DOCUMENTATION_TYPE_SPHINX) {
