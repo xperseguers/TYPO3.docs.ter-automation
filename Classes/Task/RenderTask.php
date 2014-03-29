@@ -526,17 +526,18 @@ EOT;
 			}
 		}
 
+		// Reverse sort the list of versions
 		usort($versions, function($a, $b) {
-			return version_compare($a, $b);
+			return version_compare($b, $a);
 		});
 
 		if ($hasLatest) {
-			$versions[] = 'latest';
+			array_unshift($versions, 'latest');
 		}
 
 		$extensions[$extensionKey] = array(
 			'key' => $extensionKey,
-			'latest' => $versions[count($versions) - 1],
+			'latest' => $versions[0],
 			'versions' => $versions,
 		);
 
