@@ -508,6 +508,13 @@ EOT;
 		unset($versions['latest']);
 		$versions = array_flip($versions);
 
+		// Remove localizations
+		for ($i = 0; $i < count($versions); $i++) {
+			if (!preg_match('/^[0-9]/', $versions[$i])) {
+				unset($versions[$i]);
+			}
+		}
+
 		usort($versions, function($a, $b) {
 			return version_compare($a, $b);
 		});
