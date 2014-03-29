@@ -465,7 +465,7 @@ EOT;
 	 * @param string $directory Build directory of the last rendered documentation (thus incl. version number at the end)
 	 * @return void
 	 */
-	protected function updateListOfExtensions($extensionKey, $directory) {
+	protected function updateListOfExtensions($extensionKey, $directory, $refresh = FALSE) {
 		$extensionsJsFilename = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/extensions.js';
 		$extensions = array();
 		if (is_file($extensionsJsFilename)) {
@@ -489,6 +489,17 @@ EOT;
 				}
 				$extensions = $list;
 				unset($list);
+				if ($refresh) {
+					$exts = array_keys($extensions);
+					foreach ($exts as $ext) {
+						$extDir = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $ext;
+						if (is_dir($extDir)) {
+							echo '   [INFO] Refreshing versions of ' . $ext . "\n";
+							$this->updateListOfExtensions($ext, $extDir . '/latest');
+						}
+					}
+					return;
+				}
 			}
 		} else {
 			// TODO: initialize this file by searching for every existing extensions and versions?
