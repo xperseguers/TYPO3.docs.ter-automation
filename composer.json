@@ -1,0 +1,11 @@
+{
+    "name": "typo3/docs-builder",
+    "type": "typo3-flow-package",
+    "homepage": "https://github.com/xperseguers/TYPO3.docs.ter-automation",
+    "license": "GPL-3.0+",
+    "autoload": {
+        "psr-4": {
+            "Causal\\Docst3o": "Classes"
+        }
+    }
+}
