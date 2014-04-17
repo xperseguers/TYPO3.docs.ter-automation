@@ -1,0 +1,5 @@
+All files in this folder structure "default_files/Documentation" 
+starting with prefix "default_" will be added to the project at
+"Documentation/" without the prefix. Files are only copied if they
+are missing. Existing files are NOT overwritten.
+Missing folders will be created.

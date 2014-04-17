@@ -1,0 +1,56 @@
+ChangeLog.txt, coding: utf-8 ƒ÷‹‰ˆ¸ﬂ
+
+2013-08-02
+    Fix bug in ./T3PythonDocBuilder to avoid crash when the OpenOffice
+    manual doesn't contain a single image.
+
+    GIF files are now converted to PNG and saved additionally as
+    '*.gif.png'. Since GIF files aren't garanteed to work with Latex
+    the PNG are being used.
+
+
+2013-06-25
+    Add ChangeLog.txt for ./T3PythonDocBuilder.
+    Introduce constants.py to keep common constants.
+    Bump version number of ooxhtml2rst.py to __version__ = '1.2.0'.
+    Refer to "docs.typo3.org" instead of "preview.docs.typo3.org"
+    in the template.
+    Do not write "DEFINE SOME TEXTROLES" any more in each ReST-file.
+    Add ".. include:: [../]Includes.txt in each ReST-file.
+    Do not create ReST version of type "flt" with directive
+    "..†field-list-table::" anymore (but still ".. t3-field-list-table::").
+
+    Prepend all sections with a label. Only sections made up by just
+    underlining are covered.
+
+    Add the Includes.txt file.
+    Add the Targets.rst file.
+
+    Tweak the "dllisttables(.py)". These are the "definition list
+    structures" that are produced from the original "property tables" of
+    the OpenOffice documents. Tweaking means: drop the first table row
+    it is meaningless. Add a headline and label for each row.
+
+
+2013-05-24 wishlist:
+
+    go through the file structure (starting at Documentation)
+    record the depth level
+    in each file:
+     remove the text role header
+     add the include directive (with respect to depth)
+     for each section heading
+      add a label before it. Base the label on the section heading text.
+     read t3-field-list-table structures
+     for each such structure
+      remove the first row
+      for each other row
+       repeat the t3-field-list-table declaration
+       add a section heading before it (with a label) based on the property's (first field) name
+
+
+2012-09-03
+    Initial realease of the T3PythonDocBuilder.
+    http://forum.typo3.org/index.php/t/191327/
+
+End of ChangeLog.txt

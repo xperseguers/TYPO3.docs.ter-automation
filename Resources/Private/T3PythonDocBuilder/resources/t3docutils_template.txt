@@ -1,0 +1,58 @@
+%(head_prefix)s
+%(head)s
+%(stylesheet)s
+
+<link                        href="http://docs.typo3.org/css/typo3_docutils_styles.css"          type="text/css" rel="stylesheet" />
+<link title="Standard style" href="http://docs.typo3.org/css/typo3_docutils_styles_standard.css" type="text/css" rel="stylesheet" />
+<link title="Test style 1"   href="http://docs.typo3.org/css/typo3_docutils_styles_test_1.css"   type="text/css" rel="alternate stylesheet" />
+<link title="Test style 2"   href="http://docs.typo3.org/css/typo3_docutils_styles_test_2.css"   type="text/css" rel="alternate stylesheet" />
+<link title="Test style 3"   href="http://docs.typo3.org/css/typo3_docutils_styles_test_3.css"   type="text/css" rel="alternate stylesheet" />
+
+<script type="text/javascript" src="http://docs.typo3.org/js/styleswitcher.js"></script>
+<script type="text/javascript" src="http://docs.typo3.org/js/terdoc.js"></script>
+
+%(body_prefix)s
+
+
+
+<!-- following: body_pre_docinfo -->
+
+
+
+<div id="t3toolbar">
+ Go to:  
+    <a href="../.." title="Go to index page">index</a>
+  | <a href=".." title="Go up one level">other versions</a>
+  | <a href="manual.sxw"  title="Download the original OpenOffice document">manual.sxw</a>
+  | <a href="manual.html" title="See the HTML version created by OpenOffice">manual.html</a>
+  | <a href="manual.rst"  title="See the ReST version created from manual.html">manual.rst</a>
+  | <a href="manual-for-sphinx.rst"  title="See the ReST version created from manual.html using standard reST markup only">manual-for-sphinx.rst</a>
+ <span style="margin-left: 3em"></span>
+ Styleswitcher:  
+    <a href="#" title="standard style" onclick="setActiveStyleSheet('Standard style'); return false;" >0</a>
+  | <a href="#" title="test style 1"   onclick="setActiveStyleSheet('Test style 1')  ; return false;" >1</a>
+  | <a href="#" title="test style 2"   onclick="setActiveStyleSheet('Test style 2')  ; return false;" >2</a> 
+  | <a href="#" title="test style 3"   onclick="setActiveStyleSheet('Test style 3')  ; return false;" >3</a> 
+</div>
+
+
+
+%(body_pre_docinfo)s
+
+
+
+<!-- following: docinfo -->
+
+
+
+%(docinfo)s
+
+
+
+<!-- following: body -->
+
+
+
+
+%(body)s
+%(body_suffix)s
