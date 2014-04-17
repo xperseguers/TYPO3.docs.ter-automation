@@ -610,7 +610,4 @@ EOT;
 
 }
 
-$GLOBALS['CONFIG'] = require_once(dirname(__FILE__) . '/../../Configuration/LocalConfiguration.php');
 
-$task = new RenderTask();
-$task->run();
