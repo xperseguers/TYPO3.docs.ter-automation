@@ -31,226 +31,223 @@ namespace Causal\Docst3o\Task;
  */
 class RenderTask {
 
-	const DOCUMENTATION_TYPE_UNKNOWN    = 0;
-	const DOCUMENTATION_TYPE_SPHINX     = 1;
-	const DOCUMENTATION_TYPE_README     = 2;
+	const DOCUMENTATION_TYPE_UNKNOWN = 0;
+	const DOCUMENTATION_TYPE_SPHINX = 1;
+	const DOCUMENTATION_TYPE_README = 2;
 	const DOCUMENTATION_TYPE_OPENOFFICE = 3;
 
+	protected $resourceBaseDirectory;
+
+	protected $renderDirectory;
+
 	/**
-	 * Runs this task.
 	 *
+	 *
+	 * @param string $resourceBaseDirectory
 	 * @return void
 	 */
-	public function run() {
-		$queueDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
-		$renderDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/render/';
+	public function setResourceBaseDirectory($resourceBaseDirectory) {
+		$this->resourceBaseDirectory = $resourceBaseDirectory;
+	}
 
-		$extensionKeys = $this->get_dirs($queueDirectory);
-		foreach ($extensionKeys as $extensionKey) {
-			$extensionDirectory = $queueDirectory . $extensionKey . '/';
-			$versions = $this->get_dirs($extensionDirectory);
+	/**
+	 *
+	 *
+	 * @param string $renderDirectory
+	 * @return void
+	 */
+	public function setRenderDirectory($renderDirectory) {
+		$this->renderDirectory = $renderDirectory;
+	}
 
-			if (!count($versions)) {
-				echo '   [INFO] No version found for ' . $extensionKey . ': removing from queue' . "\n";
-				exec('rm -rf ' . $extensionDirectory);
-				continue;
+	/**
+	 *
+	 *
+	 * @param string $sourceDirectory
+	 * @param string $targetDirectory
+	 * @param string $extensionKey
+	 * @param string $version
+	 * @return boolean TRUE if rendering was successful
+	 */
+	public function render($sourceDirectory, $targetDirectory, $extensionKey, $version) {
+		if (is_file($sourceDirectory . 'Documentation/Index.rst')) {
+			$documentationType = static::DOCUMENTATION_TYPE_SPHINX;
+
+			if (is_file($sourceDirectory . 'Documentation/_Fr/UserManual.rst')) {
+				// This is most probably a garbage documentation coming from the old
+				// documentation template and automatically included with the Extension Builder
+				echo '[WARNING] Garbage documentation from template found: skipping rendering' . "\n";
+				return FALSE;
 			}
-
-			$baseBuildDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/';
-
-			foreach ($versions as $version) {
-				echo '   [INFO] Processing ' . $extensionKey . ' v.' . $version . "\n";
-				$versionDirectory = $extensionDirectory . $version . '/';
-				$buildDirectory = $baseBuildDirectory . $version;
-
-				if (preg_match('/^\d+\.\d+\.\d+$/', $version)) {
-					if (is_file($versionDirectory . 'Documentation/Index.rst')) {
-						$documentationType = static::DOCUMENTATION_TYPE_SPHINX;
-
-						if (is_file($versionDirectory . 'Documentation/_Fr/UserManual.rst')) {
-							// This is most probably a garbage documentation coming from the old
-							// documentation template and automatically included with the Extension Builder
-							echo '[WARNING] Garbage documentation from template found: skipping rendering' . "\n";
-							$documentationType = static::DOCUMENTATION_TYPE_UNKNOWN;
-						}
-					} elseif (is_file($versionDirectory . 'README.rst')) {
-						$documentationType = static::DOCUMENTATION_TYPE_README;
-					} elseif (is_file($versionDirectory . 'doc/manual.sxw')) {
-						$documentationType = static::DOCUMENTATION_TYPE_OPENOFFICE;
-					} else {
-						$documentationType = static::DOCUMENTATION_TYPE_UNKNOWN;
-					}
-					switch ($documentationType) {
-
-						// ---------------------------------
-						// Sphinx documentation
-						// ---------------------------------
-						case static::DOCUMENTATION_TYPE_SPHINX:
-							echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (Sphinx project)' . "\n";
-
-							// Clean-up render directory
-							$this->cleanUpDirectory($renderDirectory);
-
-
-							if (!is_file($versionDirectory . 'Documentation/Settings.yml')) {
-								$this->createSettingsYml($versionDirectory, $extensionKey);
-							}
-
-							// Fix version/release in Settings.yml
-							$this->overrideVersionAndReleaseInSettingsYml($versionDirectory, $version);
-
-							$this->createConfPy(
-								$extensionKey,
-								$version,
-								$renderDirectory,
-								'Documentation/'
-							);
-
-							$this->createCronRebuildConf(
-								$extensionKey,
-								$version,
-								$buildDirectory,
-								$renderDirectory,
-								$versionDirectory,
-								'Documentation/'
-							);
-
-							$this->renderProject($renderDirectory);
-							if (!is_file($buildDirectory . '/Index.html')) {
-								echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
-							} else {
-								$this->addReference($extensionKey, $documentationType, $version, $versionDirectory, $buildDirectory);
-								$this->updateListOfExtensions($extensionKey, $buildDirectory);
-							}
-							break;
-
-						// ---------------------------------
-						// README.rst documentation
-						// ---------------------------------
-						case static::DOCUMENTATION_TYPE_README:
-							echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (simple README)' . "\n";
-
-							// Clean-up render directory
-							$this->cleanUpDirectory($renderDirectory);
-
-							$this->createConfPy(
-								$extensionKey,
-								$version,
-								$renderDirectory,
-								'',
-								'README'
-							);
-
-							$this->createCronRebuildConf(
-								$extensionKey,
-								$version,
-								$buildDirectory,
-								$renderDirectory,
-								$versionDirectory,
-								''
-							);
-
-							$this->renderProject($renderDirectory);
-							if (!is_file($buildDirectory . '/Index.html')) {
-								echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
-							} else {
-								$this->addReference($extensionKey, $documentationType, $version, $versionDirectory, $buildDirectory);
-								$this->updateListOfExtensions($extensionKey, $buildDirectory);
-							}
-							break;
-
-						// ---------------------------------
-						// OpenOffice documentation
-						// ---------------------------------
-						case static::DOCUMENTATION_TYPE_OPENOFFICE:
-							echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (OpenOffice)' . "\n";
-
-							// Clean-up render directory
-							$this->cleanUpDirectory($renderDirectory);
-
-							// Convert OpenOffice to Sphinx
-							$manualFilename = $versionDirectory . 'doc/manual.sxw';
-							$cmd = 'python ' .
-								dirname(__FILE__) . '/../../Resources/Private/Vendor/RestTools/T3PythonDocBuilderPackage/src/T3PythonDocBuilder/t3pdb_sxw2html.py ' .
-								escapeshellarg($manualFilename) . ' ' .
-								escapeshellarg($renderDirectory);
-							exec($cmd);
-
-							if (!is_file($renderDirectory . 't3pdb/Documentation/Index.rst')) {
-								echo '  [ERROR] Conversion from manual.sxw failed' . "\n";
-							} else {
-								// Move the generated Sphinx project to the original extension directory
-								exec('rm -rf ' . escapeshellarg($versionDirectory) . 'Documentation');
-								exec('mv ' . escapeshellarg($renderDirectory . 't3pdb/Documentation') . ' ' . escapeshellarg($versionDirectory));
-
-								if (!is_file($versionDirectory . 'Documentation/Includes.txt')) {
-									// This file is often needed, and may crash the rendering if it is not there.
-									// This is most probably a bug in the OOo converter
-									exec('touch ' . escapeshellarg($versionDirectory . 'Documentation/Includes.txt'));
-								}
-								if (!is_file($versionDirectory . 'Documentation/Targets.rst')) {
-									// This file is often needed, and may crash the rendering if it is not there.
-									// This is most probably a bug in the OOo converter
-									exec('touch ' . escapeshellarg($versionDirectory . 'Documentation/Targets.rst'));
-								}
-
-								// We now lack a Settings.yml file
-								$this->createSettingsYml($versionDirectory, $extensionKey);
-
-								// ---------------------------------
-								// Sphinx from OOo documentation
-								// ---------------------------------
-
-								// Clean-up render directory
-								$this->cleanUpDirectory($renderDirectory);
-
-								// Fix version/release in Settings.yml
-								$this->overrideVersionAndReleaseInSettingsYml($versionDirectory, $version);
-
-								$this->createConfPy(
-									$extensionKey,
-									$version,
-									$renderDirectory,
-									'Documentation/'
-								);
-
-								$this->createCronRebuildConf(
-									$extensionKey,
-									$version,
-									$buildDirectory,
-									$renderDirectory,
-									$versionDirectory,
-									'Documentation/',
-									FALSE
-								);
-
-								$this->renderProject($renderDirectory);
-								if (!is_file($buildDirectory . '/Index.html')) {
-									echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
-								} else {
-									$this->addReference($extensionKey, $documentationType, $version, $versionDirectory, $buildDirectory);
-									$this->updateListOfExtensions($extensionKey, $buildDirectory);
-								}
-							}
-							break;
-
-						default:
-							echo '[WARNING] Unknown documentation format: skipping rendering' . "\n";
-							break;
-					}
-				}
-
-				$this->removeFromQueue($extensionKey, $version);
-				sleep(5);
-			}
-
-			// Put .htaccess for the extension if needed
-			if (is_dir($baseBuildDirectory) && !is_file($baseBuildDirectory . '.htaccess')) {
-				symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/_htaccess', $baseBuildDirectory . '.htaccess');
-			}
-
+		} elseif (is_file($sourceDirectory . 'README.rst')) {
+			$documentationType = static::DOCUMENTATION_TYPE_README;
+		} elseif (is_file($sourceDirectory . 'doc/manual.sxw')) {
+			$documentationType = static::DOCUMENTATION_TYPE_OPENOFFICE;
+		} else {
+			$documentationType = static::DOCUMENTATION_TYPE_UNKNOWN;
 		}
 
+		// Clean-up render directory
+		$this->cleanUpRenderDirectory();
+
+		switch ($documentationType) {
+			case static::DOCUMENTATION_TYPE_SPHINX:
+				$this->prepareSphinxRendering($extensionKey, $version, $sourceDirectory, $targetDirectory);
+				break;
+			case static::DOCUMENTATION_TYPE_README:
+				$this->prepareReadmeRendering($extensionKey, $version, $sourceDirectory, $targetDirectory);
+				break;
+			case static::DOCUMENTATION_TYPE_OPENOFFICE:
+				$this->prepareOpenOfficeRendering($extensionKey, $version, $sourceDirectory, $targetDirectory);
+				break;
+			default:
+				echo '[WARNING] Unknown documentation format: skipping rendering' . "\n";
+				return FALSE;
+		}
+
+		$this->renderProject($this->renderDirectory);
+
+		if (!is_file($targetDirectory . '/Index.html')) {
+			echo '[WARNING] Cannot find file ' . $targetDirectory . '/Index.html' . "\n";
+			return FALSE;
+		} else {
+			$this->addReference($extensionKey, $documentationType, $version, $sourceDirectory, $targetDirectory);
+			$this->updateListOfExtensions($extensionKey, $targetDirectory);
+		}
+
+		return TRUE;
+	}
+
+	/**
+	 *
+	 *
+	 * @param string $extensionKey
+	 * @param string $version
+	 * @param string $sourceDirectory
+	 * @param string $targetDirectory
+	 * @return void
+	 */
+	protected function prepareSphinxRendering($extensionKey, $version, $sourceDirectory, $targetDirectory) {
+		echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (Sphinx project)' . "\n";
+
+		if (!is_file($sourceDirectory . 'Documentation/Settings.yml')) {
+			$this->createSettingsYml($sourceDirectory, $extensionKey);
+		}
+
+		// Fix version/release in Settings.yml
+		$this->overrideVersionAndReleaseInSettingsYml($sourceDirectory, $version);
+
+		$this->createConfPy(
+			$extensionKey,
+			$version,
+			'Documentation/'
+		);
+
+		$this->createCronRebuildConf(
+			$extensionKey,
+			$version,
+			$targetDirectory,
+			$sourceDirectory,
+			'Documentation/'
+		);
+	}
+
+	/**
+	 *
+	 *
+	 * @param string $extensionKey
+	 * @param string $version
+	 * @param string $sourceDirectory
+	 * @param string $targetDirectory
+	 * @return void
+	 */
+	protected function prepareReadmeRendering($extensionKey, $version, $sourceDirectory, $targetDirectory) {
+		echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (simple README)' . "\n";
+
+		$this->createConfPy(
+			$extensionKey,
+			$version,
+			$this->renderDirectory,
+			'',
+			'README'
+		);
+
+		$this->createCronRebuildConf(
+			$extensionKey,
+			$version,
+			$targetDirectory,
+			$this->renderDirectory,
+			$sourceDirectory,
+			''
+		);
+	}
+
+	/**
+	 *
+	 *
+	 * @param string $extensionKey
+	 * @param string $version
+	 * @param string $sourceDirectory
+	 * @param string $targetDirectory
+	 * @return void
+	 */
+	protected function prepareOpenOfficeRendering($extensionKey, $version, $sourceDirectory, $targetDirectory) {
+		echo ' [RENDER] ' . $extensionKey . ' ' . $version . ' (OpenOffice)' . "\n";
+
+		// Convert OpenOffice to Sphinx
+		$manualFilename = $sourceDirectory . 'doc/manual.sxw';
+		$cmd = 'python ' .
+			$this->resourceBaseDirectory . 'Private/T3PythonDocBuilder/t3pdb_sxw2html.py ' .
+			escapeshellarg($manualFilename) . ' ' .
+			escapeshellarg($this->renderDirectory);
+		exec($cmd);
+
+		if (!is_file($this->renderDirectory . 't3pdb/Documentation/Index.rst')) {
+			echo '  [ERROR] Conversion from manual.sxw failed' . "\n";
+		} else {
+			// Move the generated Sphinx project to the original extension directory
+			exec('rm -rf ' . escapeshellarg($sourceDirectory) . 'Documentation');
+			exec('mv ' . escapeshellarg($this->renderDirectory . 't3pdb/Documentation') . ' ' . escapeshellarg($sourceDirectory));
+
+			if (!is_file($sourceDirectory . 'Documentation/Includes.txt')) {
+				// This file is often needed, and may crash the rendering if it is not there.
+				// This is most probably a bug in the OOo converter
+				exec('touch ' . escapeshellarg($sourceDirectory . 'Documentation/Includes.txt'));
+			}
+			if (!is_file($sourceDirectory . 'Documentation/Targets.rst')) {
+				// This file is often needed, and may crash the rendering if it is not there.
+				// This is most probably a bug in the OOo converter
+				exec('touch ' . escapeshellarg($sourceDirectory . 'Documentation/Targets.rst'));
+			}
+
+			// We now lack a Settings.yml file
+			$this->createSettingsYml($sourceDirectory, $extensionKey);
+
+			// ---------------------------------
+			// Sphinx from OOo documentation
+			// ---------------------------------
+
+			// Clean-up render directory
+			$this->cleanUpRenderDirectory();
+
+			// Fix version/release in Settings.yml
+			$this->overrideVersionAndReleaseInSettingsYml($sourceDirectory, $version);
+
+			$this->createConfPy(
+				$extensionKey,
+				$version,
+				'Documentation/'
+			);
+
+			$this->createCronRebuildConf(
+				$extensionKey,
+				$version,
+				$targetDirectory,
+				$sourceDirectory,
+				'Documentation/',
+				FALSE
+			);
+		}
 	}
 
 	/**
@@ -266,7 +263,7 @@ class RenderTask {
 		$filenames = array('Documentation/Settings.yml');
 
 		// Search for other translated versions of Settings.yml
-		$directories = $this->get_dirs($path . 'Documentation/');
+		$directories = $this->getDirectoryNames($path . 'Documentation/');
 		foreach ($directories as $directory) {
 			if (preg_match('/^Localization\./', $directory)) {
 				$localizationDirectory = $path . 'Documentation/' . $directory . '/Settings.yml';
@@ -321,7 +318,7 @@ conf.py:
 ...
 
 YAML;
-		file_put_contents($extensionDirectory .  'Documentation/Settings.yml', $configuration);
+		file_put_contents($extensionDirectory . 'Documentation/Settings.yml', $configuration);
 	}
 
 	/**
@@ -329,23 +326,22 @@ YAML;
 	 *
 	 * @param string $extensionKey
 	 * @param string $version
-	 * @param string $renderDirectory
 	 * @param string $prefix Optional prefix directory ("Documentation/")
 	 * @param string $masterDocument
 	 * @return void
 	 */
-	protected function createConfPy($extensionKey, $version, $renderDirectory, $prefix, $masterDocument = 'Index') {
-	    $replacements = array(
+	protected function createConfPy($extensionKey, $version, $prefix, $masterDocument = 'Index') {
+		$replacements = array(
 			'###DOCUMENTATION_RELPATH###' => '../queue/' . $extensionKey . '/' . $version . '/' . $prefix,
 			'###MASTER_DOC###' => $masterDocument,
 		);
-		$contents = file_get_contents(dirname(__FILE__) . '/../../Resources/Private/Templates/conf.py');
+		$contents = file_get_contents($this->resourceBaseDirectory . 'Private/Templates/conf.py');
 		$contents = str_replace(
 			array_keys($replacements),
 			array_values($replacements),
 			$contents
 		);
-		file_put_contents($renderDirectory . 'conf.py', $contents);
+		file_put_contents($this->renderDirectory . 'conf.py', $contents);
 	}
 
 	/**
@@ -354,13 +350,12 @@ YAML;
 	 * @param string $extensionKey
 	 * @param string $version
 	 * @param string $buildDirectory
-	 * @param string $renderDirectory
-	 * @param string $versionDirectory
+	 * @param string $sourceDirectory
 	 * @param string $prefix Optional prefix directory ("Documentation/")
 	 * @param boolean $createArchive
 	 * @return void
 	 */
-	protected function createCronRebuildConf($extensionKey, $version, $buildDirectory, $renderDirectory, $versionDirectory, $prefix, $createArchive = TRUE) {
+	protected function createCronRebuildConf($extensionKey, $version, $buildDirectory, $sourceDirectory, $prefix, $createArchive = TRUE) {
 		$packageZip = $createArchive ? '1' : '0';
 
 		$contents = <<<EOT
@@ -372,11 +367,11 @@ BUILDDIR=$buildDirectory
 
 # If GITURL is empty then GITDIR is expected to be "ready" to be processed
 GITURL=
-GITDIR=$renderDirectory
+GITDIR=$this->renderDirectory
 GITBRANCH=
 
 # Path to the documentation within the Git repository
-T3DOCDIR=${versionDirectory}${prefix}
+T3DOCDIR=${sourceDirectory}${prefix}
 
 # Packaging information
 PACKAGE_ZIP=$packageZip
@@ -384,23 +379,21 @@ PACKAGE_KEY=typo3cms.extensions.$extensionKey
 PACKAGE_LANGUAGE=default
 EOT;
 
-		file_put_contents($renderDirectory . 'cron_rebuild.conf', $contents);
+		file_put_contents($this->renderDirectory . 'cron_rebuild.conf', $contents);
 	}
 
 	/**
 	 * Renders a Sphinx project.
 	 *
-	 * @param string $renderDirectory
 	 * @return void
 	 */
-	protected function renderProject($renderDirectory) {
-		symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/Makefile', $renderDirectory . 'Makefile');
-		symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/bin/cron_rebuild.sh', $renderDirectory . 'cron_rebuild.sh');
+	protected function renderProject() {
+		symlink($this->resourceBaseDirectory . 'Private/rstBuilder/config/Makefile', $this->renderDirectory . 'Makefile');
+		symlink($this->resourceBaseDirectory . 'Private/rstBuilder/bin/cron_rebuild.sh', $this->renderDirectory . 'cron_rebuild.sh');
 
 		// Invoke rendering
-		$cmd = 'cd ' . $renderDirectory . ' && touch REBUILD_REQUESTED && ./cron_rebuild.sh';
+		$cmd = 'cd ' . $this->renderDirectory . ' && touch REBUILD_REQUESTED && ./cron_rebuild.sh';
 		exec($cmd);
-
 		// TODO? Copy warnings*.txt + possible pdflatex log to output directory
 	}
 
@@ -416,7 +409,7 @@ EOT;
 	 */
 	protected function addReference($extensionKey, $format, $version, $extensionDirectory, $buildDirectory) {
 		$extensionDirectory = rtrim($extensionDirectory, '/') . '/';
-		$buildDirectory = rtrim($buildDirectory, '/');	// No trailing slash here!
+		$buildDirectory = rtrim($buildDirectory, '/'); // No trailing slash here!
 		$referenceFilename = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/manuals.json';
 		$references = array();
 		if (is_file($referenceFilename)) {
@@ -437,7 +430,7 @@ EOT;
 				$references[$extensionKey]['pdf'][] = 'default';
 			}
 
-			$directories = $this->get_dirs($extensionDirectory . 'Documentation/');
+			$directories = $this->getDirectoryNames($extensionDirectory . 'Documentation/');
 			foreach ($directories as $directory) {
 				if (preg_match('/^Localization\.(.*)/', $directory, $matches)) {
 					$locale = str_replace('_', '-', strtolower($matches[1]));
@@ -463,6 +456,7 @@ EOT;
 	 *
 	 * @param string $extensionKey
 	 * @param string $directory Build directory of the last rendered documentation (thus incl. version number at the end)
+	 * @param boolean $refresh
 	 * @return void
 	 */
 	protected function updateListOfExtensions($extensionKey, $directory, $refresh = FALSE) {
@@ -480,6 +474,7 @@ EOT;
 				if ($extensions === NULL) {
 					// Something went wrong, we do not want to further corrupt the file
 					echo '[WARNING] File ' . $extensionsJsFilename . ' cannot be decoded, please investigate and fix it.' . "\n";
+
 					return;
 				}
 				$numberOfExtensions = count($extensions);
@@ -498,6 +493,7 @@ EOT;
 							$this->updateListOfExtensions($ext, $extDir . '/latest');
 						}
 					}
+
 					return;
 				}
 			}
@@ -508,7 +504,7 @@ EOT;
 			return;
 		}
 
-		$versions = $this->get_dirs(dirname($directory));
+		$versions = $this->getDirectoryNames(dirname($directory));
 		$versions = array_flip($versions);
 
 		// No real versions
@@ -527,7 +523,7 @@ EOT;
 		}
 
 		// Reverse sort the list of versions
-		usort($versions, function($a, $b) {
+		usort($versions, function ($a, $b) {
 			return version_compare($b, $a);
 		});
 
@@ -562,12 +558,90 @@ EOT;
 	/**
 	 * Cleans-up a directory.
 	 *
-	 * @param string $path
 	 * @return void
 	 */
-	protected function cleanUpDirectory($path) {
-		exec('rm -rf ' . escapeshellarg($path));
-		exec('mkdir -p ' . escapeshellarg($path));
+	protected function cleanUpRenderDirectory() {
+		exec('rm -rf ' . escapeshellarg($this->renderDirectory));
+		exec('mkdir -p ' . escapeshellarg($this->renderDirectory));
+	}
+
+	/**
+	 * Returns an array with the names of folders in a specific path
+	 * Will return 'error' (string) if there were an error with reading directory content.
+	 *
+	 * @param string $path Path to list directories from
+	 * @return array Returns an array with the directory entries as values.
+	 * @see \TYPO3\CMS\Core\Utility\GeneralUtility::get_dirs()
+	 */
+	protected function getDirectoryNames($path) {
+		$dirs = array();
+		if ($path) {
+			if (is_dir($path)) {
+				$dir = scandir($path);
+				foreach ($dir as $entry) {
+					if (is_dir($path . '/' . $entry) && $entry != '..' && $entry != '.') {
+						$dirs[] = $entry;
+					}
+				}
+			} else {
+				$dirs = 'error';
+			}
+		}
+
+		return $dirs;
+	}
+
+	//
+	// The following methods are only needed for the standalone use
+	// through the run() method.
+	//
+
+	/**
+	 * Runs this task.
+	 *
+	 * This is called from the cron-driven scripts and assumes configuration
+	 * to be found in $GLOBALS['CONFIG'].
+	 *
+	 * Not to be used from other code than the scripts in Scripts/.
+	 *
+	 * @return void
+	 */
+	public function run() {
+		$queueDirectory = rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/queue/';
+		$this->setResourceBaseDirectory(__DIR__ . '../../Resources/');
+		$this->setRenderDirectory(rtrim($GLOBALS['CONFIG']['DIR']['work'], '/') . '/render/');
+
+		$extensionKeys = $this->getDirectoryNames($queueDirectory);
+		foreach ($extensionKeys as $extensionKey) {
+			$extensionDirectory = $queueDirectory . $extensionKey . '/';
+			$versions = $this->getDirectoryNames($extensionDirectory);
+
+			if (!count($versions)) {
+				echo '   [INFO] No version found for ' . $extensionKey . ': removing from queue' . "\n";
+				exec('rm -rf ' . $extensionDirectory);
+				continue;
+			}
+
+			$baseBuildDirectory = rtrim($GLOBALS['CONFIG']['DIR']['publish'], '/') . '/' . $extensionKey . '/';
+
+			foreach ($versions as $version) {
+				echo '   [INFO] Processing ' . $extensionKey . ' v.' . $version . "\n";
+				$versionDirectory = $extensionDirectory . $version . '/';
+				$buildDirectory = $baseBuildDirectory . $version;
+
+				if (preg_match('/^\d+\.\d+\.\d+$/', $version)) {
+					$this->render($versionDirectory, $buildDirectory, $extensionKey, $version);
+				}
+
+				$this->removeFromQueue($extensionKey, $version);
+				sleep(5);
+			}
+
+			// Put .htaccess for the extension if needed
+			if (is_dir($baseBuildDirectory) && !is_file($baseBuildDirectory . '.htaccess')) {
+				symlink(rtrim($GLOBALS['CONFIG']['DIR']['scripts'], '/') . '/config/_htaccess', $baseBuildDirectory . '.htaccess');
+			}
+		}
 	}
 
 	/**
@@ -583,31 +657,4 @@ EOT;
 		exec('rm -rf ' . $path);
 	}
 
-	/**
-	 * Returns an array with the names of folders in a specific path
-	 * Will return 'error' (string) if there were an error with reading directory content.
-	 *
-	 * @param string $path Path to list directories from
-	 * @return array Returns an array with the directory entries as values.
-	 * @see \TYPO3\CMS\Core\Utility\GeneralUtility::get_dirs()
-	 */
-	protected function get_dirs($path) {
-		$dirs = array();
-		if ($path) {
-			if (is_dir($path)) {
-				$dir = scandir($path);
-				foreach ($dir as $entry) {
-					if (is_dir($path . '/' . $entry) && $entry != '..' && $entry != '.') {
-						$dirs[] = $entry;
-					}
-				}
-			} else {
-				$dirs = 'error';
-			}
-		}
-		return $dirs;
-	}
-
 }
-
-

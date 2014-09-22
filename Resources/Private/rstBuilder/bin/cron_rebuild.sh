@@ -106,7 +106,8 @@ function lazy_mv() {
     mv $FROM_DIR $TO_DIR
 
     # Find duplicates one level higher and replace them with hard-links
-    fdupes -rLq $TO_DIR/..
+    # commented, as the L flag was removed in the Wheezy version
+    #fdupes -rLq $TO_DIR/..
 }
 
 # ------------------------------------------------------
@@ -261,7 +262,7 @@ function rebuildneeded() {
     if [ -r "$MAKE_DIRECTORY/build.checksum" ] && [ `$STAT_FORMAT "$MAKE_DIRECTORY/build.checksum"` -le $(( `date +%s` - 24*60*60)) ]; then
         rm "$MAKE_DIRECTORY/build.checksum"
     fi
-    
+
     if [ ! -r "$MAKE_DIRECTORY/build.checksum" ]; then
         # Never built
         echo $CHECKSUM > "$MAKE_DIRECTORY/build.checksum"
