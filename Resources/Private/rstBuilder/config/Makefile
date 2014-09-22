@@ -1,6 +1,6 @@
 # You can set these variables from the command line.
 SPHINXOPTS    = -c . -a -E -w warnings.txt
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = /usr/local/bin/sphinx-build
 PAPER         =
 # Following variables are set from the command line
 BUILDDIR      = /dev/null
@@ -53,6 +53,7 @@ clean:
 
 html:
 	$(SPHINXBUILD) -b t3html $(ALLSPHINXOPTS) $(BUILDDIR)
+	cp -p warnings.txt $(BUILDDIR)
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)."
 
@@ -63,6 +64,7 @@ dirhtml:
 
 singlehtml:
 	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml
+	cp -p warnings.txt $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."
 
@@ -73,6 +75,7 @@ pickle:
 
 json:
 	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json
+	cp -p warnings.txt $(BUILDDIR)
 	@echo
 	@echo "Build finished; now you can process the JSON files."
 

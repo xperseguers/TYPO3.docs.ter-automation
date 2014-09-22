@@ -221,7 +221,7 @@ class RenderTask {
 			}
 
 			// We now lack a Settings.yml file
-			$this->createSettingsYml($sourceDirectory, $extensionKey);
+			$this->createSettingsYml($sourceDirectory, $extensionKey, TRUE);
 
 			// ---------------------------------
 			// Sphinx from OOo documentation
@@ -293,9 +293,10 @@ class RenderTask {
 	 *
 	 * @param string $extensionDirectory
 	 * @param string $extensionKey
+	 * @param bool $isLegacy
 	 * @return void
 	 */
-	protected function createSettingsYml($extensionDirectory, $extensionKey) {
+	protected function createSettingsYml($extensionDirectory, $extensionKey, $isLegacy = FALSE) {
 		$extensionDirectory = rtrim($extensionDirectory, '/') . '/';
 
 		$_EXTKEY = $extensionKey;
@@ -303,6 +304,7 @@ class RenderTask {
 		include($extensionDirectory . 'ext_emconf.php');
 		$copyright = date('Y');
 		$title = $EM_CONF[$_EXTKEY]['title'];
+		$isLegacy = $isLegacy ? 'true' : 'false';
 
 		$configuration = <<<YAML
 # This is the project specific Settings.yml file.
@@ -315,6 +317,9 @@ conf.py:
   project: $title
   version: 1.0
   release: 1.0.0
+  html_theme_options:
+    legacy_source_format: $isLegacy
+
 ...
 
 YAML;

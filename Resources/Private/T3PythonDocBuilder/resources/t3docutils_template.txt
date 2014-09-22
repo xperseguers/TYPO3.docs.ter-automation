@@ -5,8 +5,6 @@
 <link                        href="http://docs.typo3.org/css/typo3_docutils_styles.css"          type="text/css" rel="stylesheet" />
 <link title="Standard style" href="http://docs.typo3.org/css/typo3_docutils_styles_standard.css" type="text/css" rel="stylesheet" />
 <link title="Test style 1"   href="http://docs.typo3.org/css/typo3_docutils_styles_test_1.css"   type="text/css" rel="alternate stylesheet" />
-<link title="Test style 2"   href="http://docs.typo3.org/css/typo3_docutils_styles_test_2.css"   type="text/css" rel="alternate stylesheet" />
-<link title="Test style 3"   href="http://docs.typo3.org/css/typo3_docutils_styles_test_3.css"   type="text/css" rel="alternate stylesheet" />
 
 <script type="text/javascript" src="http://docs.typo3.org/js/styleswitcher.js"></script>
 <script type="text/javascript" src="http://docs.typo3.org/js/terdoc.js"></script>
@@ -31,8 +29,6 @@
  Styleswitcher:  
     <a href="#" title="standard style" onclick="setActiveStyleSheet('Standard style'); return false;" >0</a>
   | <a href="#" title="test style 1"   onclick="setActiveStyleSheet('Test style 1')  ; return false;" >1</a>
-  | <a href="#" title="test style 2"   onclick="setActiveStyleSheet('Test style 2')  ; return false;" >2</a> 
-  | <a href="#" title="test style 3"   onclick="setActiveStyleSheet('Test style 3')  ; return false;" >3</a> 
 </div>
 
 

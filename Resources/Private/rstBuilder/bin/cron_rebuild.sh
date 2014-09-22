@@ -127,11 +127,15 @@ function compilepdf() {
         return
     fi
 
+    # Create LATEX file and helper files
     make -e latex
     # Fix generated Makefile for batch processing
     sed -i"" 's/pdflatex /pdflatex -interaction=nonstopmode -halt-on-error /' $BUILDDIR/latex/Makefile
     # Fix use of straight single quotes in source code
     perl -i -pe 'BEGIN{undef $/;} s/(\\makeatother.*?\\begin\{document\})/\\def\\PYGZsq{\\textquotesingle}\n\1/smg' $BUILDDIR/latex/$PROJECT.tex
+    # Fix color of links inside the TOC; at this place make them black
+    sed -i"" 's/\\tableofcontents/{\\hypersetup{linkcolor=black}\n\\tableofcontents\n}/' $BUILDDIR/latex/$PROJECT.tex
+    # Create PDF
     make -C $BUILDDIR/latex all-pdf
     EXITCODE=$?
 
@@ -143,13 +147,15 @@ function compilepdf() {
     fi
 
     if [ $EXITCODE -ne 0 ]; then
-        # Store log into pdflatex.txt, may be useful to investigate
-        cat $BUILDDIR/latex/*.log >> $MAKE_DIRECTORY/pdflatex.txt
+        # Store log into pdf.log, may be useful to investigate
+        cat $BUILDDIR/latex/*.log >> $BUILDDIR/pdf.log
         echo "Could not compile as PDF, skipping."
     elif [ ! -f "$PDFFILE" ]; then
         EXITCODE=1
         echo "Could not find output PDF, skipping."
     else
+        # Store log even though no fatal errors occured
+        cat $BUILDDIR/latex/*.log >> $BUILDDIR/pdf.log
         # Move PDF to a directory "_pdf" (instead of "latex")
         mkdir $BUILDDIR/_pdf
         mv $PDFFILE $BUILDDIR/_pdf/$TARGETPDF
@@ -262,7 +268,7 @@ function rebuildneeded() {
     if [ -r "$MAKE_DIRECTORY/build.checksum" ] && [ `$STAT_FORMAT "$MAKE_DIRECTORY/build.checksum"` -le $(( `date +%s` - 24*60*60)) ]; then
         rm "$MAKE_DIRECTORY/build.checksum"
     fi
-
+    
     if [ ! -r "$MAKE_DIRECTORY/build.checksum" ]; then
         # Never built
         echo $CHECKSUM > "$MAKE_DIRECTORY/build.checksum"
@@ -340,7 +346,9 @@ function renderdocumentation() {
     make -e singlehtml
     # make -e dirhtml
 
-    ln -s $MAKE_DIRECTORY $BUILDDIR/_make
+    # Provide a _make directory in public_html to access
+    # rendering configuration files
+    #ln -s $MAKE_DIRECTORY $BUILDDIR/_make
 
     # Make simple README documentation accessible
     pushd $BUILDDIR >/dev/null
