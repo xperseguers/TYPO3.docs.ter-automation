@@ -18,7 +18,6 @@ return array(
 		// Path to t3xutils.phar, available off
 		// https://github.com/etobi/Typo3ExtensionUtils
 		't3xutils.phar' => '/path/to/t3xutils.phar',
+		'pandoc' => '/usr/bin/pandoc',
 	)
 );
-
-?>

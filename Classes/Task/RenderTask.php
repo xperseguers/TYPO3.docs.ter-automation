@@ -35,6 +35,7 @@ class RenderTask {
 	const DOCUMENTATION_TYPE_SPHINX     = 1;
 	const DOCUMENTATION_TYPE_README     = 2;
 	const DOCUMENTATION_TYPE_OPENOFFICE = 3;
+	const DOCUMENTATION_TYPE_MARKDOWN   = 4;
 
 	/**
 	 * Runs this task.
@@ -75,6 +76,8 @@ class RenderTask {
 						}
 					} elseif (is_file($versionDirectory . 'README.rst')) {
 						$documentationType = static::DOCUMENTATION_TYPE_README;
+					} elseif (is_file($versionDirectory . 'README.md') && !empty($GLOBALS['CONFIG']['BIN']['pandoc'])) {
+						$documentationType = static::DOCUMENTATION_TYPE_MARKDOWN;
 					} elseif (is_file($versionDirectory . 'doc/manual.sxw')) {
 						$documentationType = static::DOCUMENTATION_TYPE_OPENOFFICE;
 					} else {
@@ -123,6 +126,23 @@ class RenderTask {
 								$this->updateListOfExtensions($extensionKey, $buildDirectory);
 							}
 							break;
+
+						// ---------------------------------
+						// README.rst documentation
+						// ---------------------------------
+						case static::DOCUMENTATION_TYPE_MARKDOWN:
+							echo ' [CONVERT] ' . $extensionKey . ' ' . $version . ' (Markdown)' . "\n";
+
+							$cmd = $GLOBALS['CONFIG']['BIN']['pandoc'] .
+								' -f markdown -t rst' .
+								' -o ' . escapeshellarg($versionDirectory . 'README.rst') .
+								' ' . escapeshellarg($versionDirectory . 'README.md');
+							$output = array();
+							$exitCode = 0;
+							$success = exec($cmd, $output, $exitCode);
+
+							if ($success != 0) break;
+							// NO BREAK HERE TO CONTINUE WITH "README"
 
 						// ---------------------------------
 						// README.rst documentation
