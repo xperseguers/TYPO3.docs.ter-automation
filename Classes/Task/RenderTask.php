@@ -128,7 +128,7 @@ class RenderTask {
 							break;
 
 						// ---------------------------------
-						// README.rst documentation
+						// README.md documentation
 						// ---------------------------------
 						case static::DOCUMENTATION_TYPE_MARKDOWN:
 							echo ' [CONVERT] ' . $extensionKey . ' ' . $version . ' (Markdown)' . "\n";
