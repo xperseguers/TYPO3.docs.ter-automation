@@ -390,6 +390,7 @@ YAML;
 		$contents = <<<EOT
 PROJECT=$extensionKey
 VERSION=$version
+TER_EXTENSION=1
 
 # Where to publish documentation
 BUILDDIR=$buildDirectory
