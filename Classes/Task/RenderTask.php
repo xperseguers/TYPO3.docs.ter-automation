@@ -31,6 +31,8 @@ namespace Causal\Docst3o\Task;
  */
 class RenderTask {
 
+	const SIZE_THRESHOLD = 1500;	// bytes, about 2 paragraphs of "Lorem Ipsum"
+
 	const DOCUMENTATION_TYPE_UNKNOWN    = 0;
 	const DOCUMENTATION_TYPE_SPHINX     = 1;
 	const DOCUMENTATION_TYPE_README     = 2;
@@ -74,9 +76,9 @@ class RenderTask {
 							echo '[WARNING] Garbage documentation from template found: skipping rendering' . "\n";
 							$documentationType = static::DOCUMENTATION_TYPE_UNKNOWN;
 						}
-					} elseif (is_file($versionDirectory . 'README.rst')) {
+					} elseif (is_file($versionDirectory . 'README.rst') && filesize($versionDirectory . 'README.md') > static::SIZE_THRESHOLD) {
 						$documentationType = static::DOCUMENTATION_TYPE_README;
-					} elseif (is_file($versionDirectory . 'README.md') && !empty($GLOBALS['CONFIG']['BIN']['pandoc'])) {
+					} elseif (is_file($versionDirectory . 'README.md') && filesize($versionDirectory . 'README.md') > static::SIZE_THRESHOLD && !empty($GLOBALS['CONFIG']['BIN']['pandoc'])) {
 						$documentationType = static::DOCUMENTATION_TYPE_MARKDOWN;
 					} elseif (is_file($versionDirectory . 'doc/manual.sxw')) {
 						$documentationType = static::DOCUMENTATION_TYPE_OPENOFFICE;
