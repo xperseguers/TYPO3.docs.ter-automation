@@ -94,9 +94,19 @@ class RenderTask {
 							// Clean-up render directory
 							$this->cleanUpDirectory($renderDirectory);
 
-
 							if (!is_file($versionDirectory . 'Documentation/Settings.yml')) {
-								$this->createSettingsYml($versionDirectory, $extensionKey);
+								// Detect if author automatically converted from OOo manual without
+								// taking care of cleaning it up (a bit)
+								// Trigger is the invalid modification date/creation date of the form
+								// 2013-10-04 15::5:0:
+								$isLegacy = FALSE;
+								if (is_file($versionDirectory . 'Documentation/Index.rst')) {
+									$contents = file_get_contents($versionDirectory . 'Documentation/Index.rst');
+									if (preg_match('/\\s+\\d{4}-\\d{2}-\\d{2} .*::/', $contents, $matches)) {
+										$isLegacy = TRUE;
+									}
+								}
+								$this->createSettingsYml($versionDirectory, $extensionKey, $isLegacy);
 							}
 
 							// Fix version/release in Settings.yml
