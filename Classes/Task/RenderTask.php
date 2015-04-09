@@ -182,6 +182,12 @@ class RenderTask {
 								''
 							);
 
+							// We lack a Settings.yml file
+							$this->createSettingsYml($versionDirectory, $extensionKey);
+
+							// Fix version/release in Settings.yml
+							$this->overrideVersionAndReleaseInSettingsYml($versionDirectory, $version);
+
 							$this->renderProject($renderDirectory);
 							if (!is_file($buildDirectory . '/Index.html')) {
 								echo '[WARNING] Cannot find file ' . $buildDirectory . '/Index.html' . "\n";
@@ -295,18 +301,22 @@ class RenderTask {
 	 */
 	protected function overrideVersionAndReleaseInSettingsYml($path, $version) {
 		$path = rtrim($path, '/') . '/';
-		$filenames = array('Documentation/Settings.yml');
+		if (is_dir($path . 'Documentation')) {
+			$filenames = array('Documentation/Settings.yml');
 
-		// Search for other translated versions of Settings.yml
-		$directories = $this->get_dirs($path . 'Documentation/');
-		foreach ($directories as $directory) {
-			if (preg_match('/^Localization\./', $directory)) {
-				$localizationDirectory = $path . 'Documentation/' . $directory . '/Settings.yml';
-				if (!is_file($localizationDirectory)) {
-					copy($path . 'Documentation/Settings.yml', $localizationDirectory);
+			// Search for other translated versions of Settings.yml
+			$directories = $this->get_dirs($path . 'Documentation/');
+			foreach ($directories as $directory) {
+				if (preg_match('/^Localization\./', $directory)) {
+					$localizationDirectory = $path . 'Documentation/' . $directory . '/Settings.yml';
+					if (!is_file($localizationDirectory)) {
+						copy($path . 'Documentation/Settings.yml', $localizationDirectory);
+					}
+					$filenames[] = 'Documentation/' . $directory . '/Settings.yml';
 				}
-				$filenames[] = 'Documentation/' . $directory . '/Settings.yml';
 			}
+		} else {
+			$filenames = array('Settings.yml');
 		}
 
 		// release is actually the "version" from TER
@@ -357,7 +367,8 @@ conf.py:
 ...
 
 YAML;
-		file_put_contents($extensionDirectory .  'Documentation/Settings.yml', $configuration);
+		$targetDirectory = is_dir($extensionDirectory . 'Documentation') ? $extensionDirectory . 'Documentation' : $extensionDirectory;
+		file_put_contents($targetDirectory .  '/Settings.yml', $configuration);
 	}
 
 	/**
