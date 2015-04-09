@@ -76,7 +76,7 @@ class RenderTask {
 							echo '[WARNING] Garbage documentation from template found: skipping rendering' . "\n";
 							$documentationType = static::DOCUMENTATION_TYPE_UNKNOWN;
 						}
-					} elseif (is_file($versionDirectory . 'README.rst') && filesize($versionDirectory . 'README.md') > static::SIZE_THRESHOLD) {
+					} elseif (is_file($versionDirectory . 'README.rst') && filesize($versionDirectory . 'README.rst') > static::SIZE_THRESHOLD) {
 						$documentationType = static::DOCUMENTATION_TYPE_README;
 					} elseif (is_file($versionDirectory . 'README.md') && filesize($versionDirectory . 'README.md') > static::SIZE_THRESHOLD && !empty($GLOBALS['CONFIG']['BIN']['pandoc'])) {
 						$documentationType = static::DOCUMENTATION_TYPE_MARKDOWN;
