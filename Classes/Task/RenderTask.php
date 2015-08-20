@@ -236,22 +236,23 @@ class RenderTask {
 								$mainFileName = $versionDirectory . 'Documentation/Index.rst';
 								$contents = file_get_contents($mainFileName);
 
-								$title = $extensionKey . ' v' . $version;
+								$title = 'EXT:' . $extensionKey . ' v' . $version;
 								$underline = str_repeat('=', strlen($title));
 								$warning = <<<REST
 $underline
 $title
 $underline
 
-Oh my! That's too bad!
+.. admonition:: Oh my! That's too bad!
+	:class: warning
 
-Unfortunately the author of $extensionKey is still relying on an outdated
-OpenOffice extension manual instead of providing a Sphinx-based documentation.
+	Unfortunately the author of $extensionKey is still relying on an outdated
+	OpenOffice extension manual instead of providing a Sphinx-based documentation.
 
-After years of support, the TYPO3 documentation team finally discontinued
-supporting this legacy format of extension manual.
+	After years of support, the TYPO3 documentation team is about to finally
+	discontinue supporting this legacy format of extension manual.
 
-We are sorry for the inconvenience.
+	For the time being, the OpenOffice manual is still rendered and available below.
 
 
 Converting OpenOffice to Sphinx
@@ -262,22 +263,7 @@ and switch to Sphinx instead of relying on OpenOffice.
 
 The TYPO3 documentation team encourages the extension author to use the
 built-in OpenOffice to Sphinx converter available with EXT:sphinx, available
-on https://typo3.org/extensions/repository/view/sphinx.
-
-
-Advantages of using Sphinx
---------------------------
-
-They are numerous advantages of the Sphinx documentation format:
-
-- **Output formats:** Sphinx projects may be automatically rendered as HTML or
-  TYPO3-branded PDF.
-- **Cross-references:** It is easy to cross-reference other chapters and sections
-  of other manuals (either TYPO3 references or extension manuals).
-- **Multilingual:** Unlike OpenOffice, Sphinx projects may be easily localized
-  and automatically presented in the most appropriate language to TYPO3 users.
-- **Collaboration:** As the documentation is plain text, it is easy to work as
-  a team on the same manual or quickly review changes using any versioning system.
+on `https://typo3.org/extensions/repository/view/sphinx <https://typo3.org/extensions/repository/view/sphinx>`__.
 
 Please read https://docs.typo3.org/typo3cms/CoreApiReference/ExtensionArchitecture/Documentation/Index.html
 for more information on how adding documentation to a TYPO3 extension projet.
@@ -291,7 +277,8 @@ For the documentation team:
 |
 | TYPO3 ... inspiring people to share
 | Get involved: https://typo3.org
-
+|
+|
 
 
 REST;
